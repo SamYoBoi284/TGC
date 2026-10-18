@@ -1,0 +1,260 @@
+/* ===========================================
+   The Glitchcore Chronicle
+   css/components.css — reusable UI components
+   MILESTONE 1: Foundation
+   =========================================== */
+
+/* ---- Header brand ---- */
+
+#appBrand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text-soft-white);
+}
+
+#appBrandGlyph {
+    color: var(--color-violet-electric);
+}
+
+/* ---- Search bar (placeholder, Milestone 7 wires it up) ---- */
+
+#appSearchBar {
+    flex: 1;
+    max-width: 420px;
+    margin: 0 var(--space-lg);
+}
+
+#globalSearchInput {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border-subtle);
+    background-color: var(--color-bg-panel);
+    color: var(--color-text-soft-white);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    outline: none;
+    transition: border-color var(--transition-fast);
+}
+
+#globalSearchInput::placeholder {
+    color: var(--color-text-disabled);
+}
+
+#globalSearchInput:focus {
+    border-color: var(--color-border-strong);
+}
+
+/* ---- Sidebar nav ---- */
+
+#sidebarNavList,
+#sidebarNavFooterList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.sidebarNavItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.sidebarNavItem:hover {
+    background-color: var(--color-bg-panel);
+    color: var(--color-text-soft-white);
+}
+
+.sidebarNavItem.sidebarNavItemActive {
+    background-color: var(--color-purple-deep);
+    color: var(--color-text-soft-white);
+    box-shadow: inset 0 0 0 1px var(--color-border-strong);
+}
+
+.sidebarNavIcon {
+    font-size: var(--font-size-md);
+    width: 20px;
+    text-align: center;
+}
+
+.sidebarNavLabel {
+    font-size: var(--font-size-sm);
+}
+
+/* ---- Dock (glass, floating) ---- */
+
+#appDock {
+    display: flex;
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-lg);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+#dockItemList {
+    display: flex;
+    gap: var(--space-sm);
+    min-height: calc(var(--dock-height) - var(--space-md));
+    align-items: center;
+}
+
+.dockItem {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-bg-panel);
+    cursor: pointer;
+    font-size: var(--font-size-lg);
+    transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.dockItem:hover {
+    background-color: var(--color-purple-deep);
+    transform: translateY(-3px);
+}
+
+.dockEmptyHint {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-disabled);
+    padding: 0 var(--space-sm);
+}
+
+/* ---- Home page ---- */
+
+#homeGreetingText {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    margin: 0 0 var(--space-xs) 0;
+    color: var(--color-text-soft-white);
+}
+
+#homeDateTimeText {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.homeWidget {
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-subtle);
+}
+
+.homeWidgetTitle {
+    margin: 0 0 var(--space-sm) 0;
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-text-soft-white);
+}
+
+.homeWidgetPlaceholder {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-disabled);
+}
+
+/* ---- Home widgets: MILESTONE 10 content (Recent Entries, Today's
+   Mood, Statistics — On This Day has its own styles in
+   css/onthisday.css) ---- */
+
+.homeWidgetList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.homeWidgetListItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.homeWidgetListItemTitle {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.homeWidgetMoodDisplay {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.homeWidgetMoodIcon {
+    font-size: var(--font-size-xl);
+    line-height: 1;
+}
+
+.homeWidgetMoodLabel {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.homeWidgetStatList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.homeWidgetStatItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.homeWidgetStatItem span:last-child {
+    color: var(--color-text-soft-white);
+    font-weight: 600;
+}
+
+/* ---- Route views ---- */
+
+.routeView {
+    display: none;
+}
+
+.routeView.routeViewActive {
+    display: block;
+    animation: routeViewFadeIn var(--transition-normal);
+}
+
+@keyframes routeViewFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

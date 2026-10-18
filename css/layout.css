@@ -1,0 +1,250 @@
+/* ===========================================
+   The Glitchcore Chronicle
+   css/layout.css — application shell layout
+   MILESTONE 1: Foundation
+   =========================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--color-bg-base);
+    color: var(--color-text-soft-white);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-md);
+    overflow: hidden;
+    user-select: none;
+}
+
+/* Custom background image, applied behind everything.
+   Stays inert (none) until Settings sets --bg-custom-image. */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image: var(--bg-custom-image);
+    background-size: cover;
+    background-position: center;
+}
+
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: var(--bg-custom-overlay);
+    pointer-events: none;
+}
+
+#appShell {
+    position: relative;
+    z-index: 1;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    grid-template-rows: var(--header-height) 1fr var(--footer-height);
+    grid-template-areas:
+        "header header"
+        "sidebar main"
+        "footer footer";
+}
+
+#appHeader {
+    grid-area: header;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-lg);
+    border-bottom: 1px solid var(--color-border-subtle);
+    background-color: var(--color-bg-elevated);
+}
+
+#appSidebar {
+    grid-area: sidebar;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: var(--space-md) var(--space-sm);
+    border-right: 1px solid var(--color-border-subtle);
+    background-color: var(--color-bg-elevated);
+    overflow-y: auto;
+}
+
+#appMain {
+    grid-area: main;
+    overflow-y: auto;
+    padding: var(--space-xl);
+}
+
+#appFooter {
+    grid-area: footer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-lg);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    border-top: 1px solid var(--color-border-subtle);
+    background-color: var(--color-bg-elevated);
+}
+
+/* Dock floats over the main area, bottom-centered, not in grid flow */
+#appDock {
+    position: fixed;
+    bottom: calc(var(--footer-height) + var(--space-md));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+/* ---- Home page layout ---- */
+
+#homeGreetingBlock {
+    margin-bottom: var(--space-xl);
+}
+
+#homeWidgetGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-lg);
+}
+
+/* ===========================================
+   MOBILE DRILL-DOWN NAV (phones only)
+   ===========================================
+   Desktop keeps the sidebar+main grid untouched above this point.
+   Below max-width:480px, the layout instead behaves like a native
+   settings app: #appSidebar becomes a full-screen "menu" list, and
+   picking an item shows that section full-screen with a back button
+   in the header instead of showing sidebar + content side by side.
+   js/sidebar.js adds/removes "mobileRouteOpen" on #appShell to
+   switch between the two states; this file only handles the visual
+   side of that. */
+@media (hover: none) and (pointer: coarse) {
+    html, body {
+        overflow-x: hidden;
+    }
+
+    #appShell {
+        display: block;
+        position: relative;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    #appHeader {
+        height: var(--header-height);
+        overflow: hidden;
+        padding: 0 var(--space-md);
+    }
+
+    /* The header was overflowing independently of the sliding panels
+       fixed earlier — it's a plain flexbox with a long title and a
+       search bar that never shrink (flex items default to
+       min-width:auto, so they refuse to shrink below their content's
+       natural width, pushing the header wider than the screen). */
+    #appBrand {
+        min-width: 0;
+        flex-shrink: 1;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    #appBrandName {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Redundant with the dedicated Search nav item on a phone, and
+       was one of the two fixed-width flex children forcing the
+       header wider than the viewport. */
+    #appSearchBar {
+        display: none;
+    }
+
+    /* Back button, hidden on the menu screen, shown once a route is
+       open. Injected into the header by js/sidebar.js. */
+    #mobileBackBtn {
+        display: none;
+        align-items: center;
+        gap: var(--space-xs);
+        background: none;
+        border: none;
+        color: var(--color-text-soft-white);
+        font-size: var(--font-size-md);
+        padding: var(--space-xs) var(--space-sm);
+        margin-right: var(--space-sm);
+        transition: opacity var(--transition-fast);
+    }
+
+    #appShell.mobileRouteOpen #mobileBackBtn {
+        display: flex;
+    }
+
+    /* Menu (sidebar) and the route screen (main) sit stacked in the
+       same space and slide past each other — same idea as Android
+       Settings' list-to-detail transition — instead of one snapping
+       away and the other snapping in. Both stay laid out (never
+       display:none) so the transform has something to animate;
+       pointer-events is turned off on whichever one is currently
+       off-screen so it can't be tapped/scrolled while hidden. */
+    #appSidebar,
+    #appMain {
+        position: absolute;
+        top: var(--header-height);
+        bottom: var(--footer-height);
+        left: 0;
+        width: 100%;
+        overflow-y: auto;
+        transition: transform var(--transition-normal);
+    }
+
+    #appSidebar {
+        transform: translateX(0);
+    }
+
+    #appMain {
+        transform: translateX(100%);
+        pointer-events: none;
+    }
+
+    #appShell.mobileRouteOpen #appSidebar {
+        transform: translateX(-100%);
+        pointer-events: none;
+    }
+
+    #appShell.mobileRouteOpen #appMain {
+        transform: translateX(0);
+        pointer-events: auto;
+    }
+
+    /* Dock (quick-action buttons) only makes sense floating over the
+       menu/home screen on a phone, not on every drilled-in page. */
+    #appShell.mobileRouteOpen #appDock {
+        display: none;
+    }
+}
+
+/* Every section's own internal two-pane layout (list + detail) was
+   also built with fixed desktop pixel columns, same as the main
+   shell — #entriesLayout, #milestonesLayout, #ideasLayout,
+   #timelineLayout (300px 1fr) and #dumpLayout (1fr 320px). On a
+   phone these caused the horizontal scroll: stack them into a single
+   column instead once a route is open full-screen. */
+@media (hover: none) and (pointer: coarse) {
+    #entriesLayout,
+    #milestonesLayout,
+    #ideasLayout,
+    #timelineLayout,
+    #dumpLayout {
+        grid-template-columns: 1fr !important;
+        grid-auto-rows: min-content !important;
+        height: auto !important;
+    }
+}

@@ -1,0 +1,224 @@
+/* ===========================================
+   The Glitchcore Chronicle
+   css/timeline.css — Timeline
+   MILESTONE 6: Timeline
+   =========================================== */
+
+#timelinePage {
+    height: 100%;
+}
+
+#timelineLayout {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: var(--space-lg);
+}
+
+/* ---- Nav panel (years / months / days) ---- */
+
+#timelineNavPanel {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-subtle);
+    background-color: var(--color-bg-elevated);
+    overflow: hidden;
+}
+
+#timelineNavHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+#timelineBackButton {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-bg-panel);
+    color: var(--color-text-soft-white);
+    font-size: var(--font-size-md);
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+#timelineBackButton:hover:not(:disabled) {
+    border-color: var(--color-border-strong);
+    background-color: var(--color-purple-deep);
+}
+
+#timelineBackButton:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+#timelineNavHeading {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-text-soft-white);
+}
+
+#timelineNavScroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-sm);
+}
+
+#timelineNavEmpty {
+    padding: var(--space-lg);
+    color: var(--color-text-disabled);
+    font-size: var(--font-size-sm);
+    text-align: center;
+}
+
+.timelineNavRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.timelineNavRow:hover {
+    background-color: var(--color-bg-panel);
+}
+
+.timelineNavRow.timelineNavRowActive {
+    background-color: var(--color-purple-deep);
+}
+
+.timelineNavRowLabel {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-soft-white);
+}
+
+.timelineNavRowCount {
+    flex-shrink: 0;
+    min-width: 22px;
+    padding: 2px var(--space-xs);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-bg-panel);
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    text-align: center;
+}
+
+/* ---- Day panel ---- */
+
+#timelineDayPanel {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-subtle);
+    background-color: var(--color-bg-elevated);
+    overflow: hidden;
+}
+
+#timelineDayScroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-lg);
+}
+
+#timelineDayEmpty {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-disabled);
+    font-size: var(--font-size-md);
+    text-align: center;
+}
+
+#timelineDayHeading {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--color-text-soft-white);
+    margin: 0 0 var(--space-lg) 0;
+}
+
+.timelineDayGroup {
+    margin-bottom: var(--space-lg);
+}
+
+.timelineDayGroupTitle {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-violet-electric);
+    margin: 0 0 var(--space-sm) 0;
+}
+
+.timelineDayGroupItems {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.timelineDayCard {
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    background-color: var(--color-bg-panel);
+    padding: var(--space-md);
+}
+
+.timelineDayCardHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xs);
+}
+
+.timelineDayCardTitle {
+    flex: 1;
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-text-soft-white);
+}
+
+.timelineDayCardMood {
+    flex-shrink: 0;
+    font-size: var(--font-size-md);
+}
+
+.timelineDayCardCategory {
+    flex-shrink: 0;
+    padding: 2px var(--space-sm);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-purple-deep);
+    color: var(--color-text-secondary);
+    font-size: 11px;
+}
+
+.timelineDayCardSnippet {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.timelineDayCardTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-top: var(--space-sm);
+}
+
+.timelineDayCardTag {
+    padding: 2px var(--space-sm);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border-subtle);
+    color: var(--color-text-disabled);
+    font-size: 11px;
+}

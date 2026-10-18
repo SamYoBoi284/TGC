@@ -1,0 +1,188 @@
+/* ===========================================
+   The Glitchcore Chronicle
+   css/settings.css
+   MILESTONE 9: Settings
+   =========================================== */
+
+#settingsPage {
+    max-width: 640px;
+    margin: 0 auto;
+    padding-bottom: var(--space-xl);
+}
+
+#settingsHeader h1 {
+    margin: 0 0 var(--space-xs) 0;
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--color-text-soft-white);
+}
+
+#settingsSubtitle {
+    margin: 0 0 var(--space-lg) 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+#settingsSections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.settingsSection {
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-subtle);
+}
+
+.settingsSectionTitle {
+    margin: 0 0 var(--space-md) 0;
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-text-soft-white);
+}
+
+.settingsRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: var(--space-sm) 0;
+    border-top: 1px solid var(--color-border-subtle);
+}
+
+.settingsRow:first-of-type {
+    border-top: none;
+}
+
+.settingsRowLabel {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.settingsRowTitle {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-soft-white);
+}
+
+.settingsRowHint {
+    font-size: 12px;
+    color: var(--color-text-disabled);
+}
+
+.settingsRowControl {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-shrink: 0;
+}
+
+.settingsRowControl input[type="range"] {
+    width: 140px;
+    accent-color: var(--color-violet-electric);
+}
+
+.settingsBtn {
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border-strong);
+    background-color: var(--color-purple-deep);
+    color: var(--color-text-soft-white);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), opacity var(--transition-fast);
+}
+
+.settingsBtn:hover {
+    background-color: var(--color-violet-electric-dim);
+}
+
+.settingsBtn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.settingsBtnGhost {
+    background-color: transparent;
+    border-color: var(--color-border-subtle);
+    color: var(--color-text-secondary);
+}
+
+.settingsBtnGhost:hover {
+    background-color: var(--color-bg-panel);
+    color: var(--color-text-soft-white);
+}
+
+.settingsBgPreviewWrap {
+    display: none;
+    padding-top: var(--space-sm);
+}
+
+.settingsBgPreviewWrapActive {
+    display: block;
+}
+
+.settingsBgPreview {
+    width: 100%;
+    height: 96px;
+    border-radius: var(--radius-md);
+    background-size: cover;
+    background-position: center;
+    border: 1px solid var(--color-border-subtle);
+}
+
+.settingsStatusText {
+    margin: var(--space-sm) 0 0 0;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    min-height: 14px;
+}
+
+.settingsAboutBlock p {
+    margin: 0 0 var(--space-xs) 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+#settingsAboutName {
+    color: var(--color-text-soft-white);
+    font-weight: 600;
+}
+
+.settingsSnapshotsList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-top: var(--space-sm);
+}
+
+.settingsSnapshotRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    background-color: var(--color-bg-panel);
+    border: 1px solid var(--color-border-subtle);
+}
+
+.settingsSnapshotInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.settingsSnapshotWhen {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-soft-white);
+}
+
+.settingsSnapshotSummary {
+    font-size: 12px;
+    color: var(--color-text-disabled);
+}

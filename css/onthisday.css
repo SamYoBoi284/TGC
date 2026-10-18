@@ -1,0 +1,94 @@
+/* ===========================================
+   The Glitchcore Chronicle
+   css/onthisday.css — On This Day
+   MILESTONE 8: On This Day
+   =========================================== */
+
+/* Widget content scrolls independently of the home grid so one
+   heavy year of memories can't stretch every other widget on the
+   row taller than it needs to be. */
+#onThisDayContent {
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.onThisDayYearGroup:not(:last-child) {
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.onThisDayYearHeading {
+    margin: 0 0 var(--space-sm) 0;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-violet-electric);
+}
+
+.onThisDayYearItems {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.onThisDayCard {
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    background-color: var(--color-bg-panel);
+    padding: var(--space-sm) var(--space-md);
+}
+
+.onThisDayCardHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xs);
+}
+
+.onThisDayCardTitle {
+    flex: 1;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-soft-white);
+}
+
+.onThisDayCardMood {
+    flex-shrink: 0;
+    font-size: var(--font-size-md);
+}
+
+.onThisDayCardCategory {
+    flex-shrink: 0;
+    padding: 2px var(--space-sm);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-purple-deep);
+    color: var(--color-text-secondary);
+    font-size: 11px;
+}
+
+.onThisDayCardSnippet {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.onThisDayCardTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-top: var(--space-sm);
+}
+
+.onThisDayCardTag {
+    padding: 2px var(--space-sm);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border-subtle);
+    color: var(--color-text-disabled);
+    font-size: 11px;
+}

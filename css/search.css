@@ -1,0 +1,169 @@
+/* ===========================================
+   The Glitchcore Chronicle
+   css/search.css — Search
+   MILESTONE 7: Search
+   =========================================== */
+
+#searchPage {
+    height: 100%;
+}
+
+#searchLayout {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+/* ---- Search input ---- */
+
+#searchHeader {
+    flex-shrink: 0;
+}
+
+#searchPageInput {
+    width: 100%;
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border-subtle);
+    background-color: var(--color-bg-elevated);
+    color: var(--color-text-soft-white);
+    font-size: var(--font-size-md);
+    font-family: inherit;
+    outline: none;
+    transition: border-color var(--transition-fast);
+    box-sizing: border-box;
+}
+
+#searchPageInput::placeholder {
+    color: var(--color-text-disabled);
+}
+
+#searchPageInput:focus {
+    border-color: var(--color-border-strong);
+}
+
+/* ---- Results ---- */
+
+#searchResultsScroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-subtle);
+    background-color: var(--color-bg-elevated);
+    padding: var(--space-lg);
+}
+
+#searchEmptyState {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-disabled);
+    font-size: var(--font-size-md);
+    text-align: center;
+}
+
+#searchResultsCount {
+    margin: 0 0 var(--space-lg) 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.searchResultGroup {
+    margin-bottom: var(--space-lg);
+}
+
+.searchResultGroup:last-child {
+    margin-bottom: 0;
+}
+
+.searchResultGroupTitle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-violet-electric);
+    margin: 0 0 var(--space-sm) 0;
+}
+
+.searchResultGroupCount {
+    min-width: 20px;
+    padding: 1px var(--space-xs);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-bg-panel);
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    text-align: center;
+}
+
+.searchResultGroupItems {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.searchResultCard {
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    background-color: var(--color-bg-panel);
+    padding: var(--space-md);
+}
+
+.searchResultCardHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xs);
+}
+
+.searchResultCardTitle {
+    flex: 1;
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-text-soft-white);
+}
+
+.searchResultCardMood {
+    flex-shrink: 0;
+    font-size: var(--font-size-md);
+}
+
+.searchResultCardCategory {
+    flex-shrink: 0;
+    padding: 2px var(--space-sm);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-purple-deep);
+    color: var(--color-text-secondary);
+    font-size: 11px;
+}
+
+.searchResultCardSnippet {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.searchResultCardTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-top: var(--space-sm);
+}
+
+.searchResultCardTag {
+    padding: 2px var(--space-sm);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border-subtle);
+    color: var(--color-text-disabled);
+    font-size: 11px;
+}

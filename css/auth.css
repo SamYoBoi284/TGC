@@ -1,0 +1,172 @@
+/* ===========================================
+   The Glitchcore Chronicle
+   css/auth.css
+   AUTH GATE: login screen + boot-checking state
+   ===========================================
+   Scope: only #authGateScreen (shown before sign-in / while checking
+   the session) and the tiny hidden-state rules for #appShell. Uses
+   the same variables as the rest of the app (variables.css) so it
+   doesn't look bolted on. */
+
+#authGateScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-base, #0a0710);
+    color: var(--text-primary, #f2f0f7);
+}
+
+#authGateScreen[hidden] {
+    display: none;
+}
+
+#appShell[hidden] {
+    display: none;
+}
+
+.authGateCard {
+    width: 100%;
+    max-width: 360px;
+    padding: 40px 32px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.authGateGlyph {
+    font-size: 40px;
+    line-height: 1;
+    color: var(--accent, #b06cf7);
+}
+
+.authGateTitle {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.authGateSubtitle {
+    font-size: 14px;
+    color: var(--text-secondary, #a89fb8);
+    margin: -8px 0 0;
+}
+
+.authGateSignInBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle, #2a2436);
+    background: var(--bg-elevated, #16101f);
+    color: var(--text-primary, #f2f0f7);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.authGateSignInBtn:hover:not(:disabled) {
+    background: var(--bg-hover, #201830);
+    border-color: var(--accent, #b06cf7);
+}
+
+.authGateSignInBtn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.authGateGoogleG {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.authGateStatus {
+    min-height: 18px;
+    font-size: 13px;
+    color: var(--text-secondary, #a89fb8);
+}
+
+.authGateStatus[data-tone="error"] {
+    color: var(--danger, #f76c6c);
+}
+
+.authGateSpinner {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--border-subtle, #2a2436);
+    border-top-color: var(--accent, #b06cf7);
+    animation: authGateSpin 0.8s linear infinite;
+}
+
+@keyframes authGateSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===========================================
+   MOBILE / ANDROID PWA
+   ===========================================
+   Below ~600px (phones), swap the centered desktop "card" for a
+   full-bleed layout that reads as a native app screen rather than a
+   shrunk-down website: content pinned toward the bottom like a
+   typical mobile sign-in sheet, larger touch target for the button,
+   and safe-area padding so it isn't crowded against notches/gesture
+   bars once installed standalone. */
+@media (max-width: 600px) {
+    #authGateScreen {
+        align-items: stretch;
+        justify-content: flex-end;
+        padding: 0;
+    }
+
+    .authGateCard {
+        max-width: none;
+        width: 100%;
+        padding: 32px 24px calc(40px + env(safe-area-inset-bottom, 0px));
+        padding-top: calc(24px + env(safe-area-inset-top, 0px));
+        gap: 24px;
+        align-items: stretch;
+        text-align: left;
+        min-height: 55vh;
+        justify-content: flex-end;
+    }
+
+    .authGateGlyph {
+        font-size: 52px;
+        text-align: left;
+    }
+
+    .authGateTitle {
+        font-size: 26px;
+        text-align: left;
+    }
+
+    .authGateSubtitle {
+        text-align: left;
+        margin: -12px 0 0;
+    }
+
+    .authGateSpinner {
+        align-self: center;
+        margin: 12px 0;
+    }
+
+    .authGateSignInBtn {
+        padding: 16px 20px;
+        font-size: 16px;
+        border-radius: 12px;
+    }
+
+    .authGateStatus {
+        text-align: left;
+    }
+}

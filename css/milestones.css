@@ -1,0 +1,228 @@
+/* ===========================================
+   The Glitchcore Chronicle
+   css/milestones.css — Milestones
+   MILESTONE 4: Milestones
+   =========================================== */
+
+#milestonesPage {
+    height: 100%;
+}
+
+#milestonesLayout {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: var(--space-lg);
+}
+
+/* ---- List panel ---- */
+
+#milestonesListPanel {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-subtle);
+    background-color: var(--color-bg-elevated);
+    overflow: hidden;
+}
+
+#milestonesListHeader {
+    display: flex;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+#milestonesSearchInput {
+    flex: 1;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border-subtle);
+    background-color: var(--color-bg-panel);
+    color: var(--color-text-soft-white);
+    font-size: var(--font-size-sm);
+    outline: none;
+}
+
+#milestonesSearchInput:focus {
+    border-color: var(--color-border-strong);
+}
+
+#milestonesNewButton {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: var(--radius-md);
+    background-color: var(--color-violet-electric-dim);
+    color: var(--color-text-soft-white);
+    font-size: var(--font-size-lg);
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+#milestonesNewButton:hover {
+    background-color: var(--color-violet-electric);
+}
+
+#milestonesListScroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-sm);
+}
+
+#milestonesListEmpty {
+    padding: var(--space-lg);
+    color: var(--color-text-disabled);
+    font-size: var(--font-size-sm);
+    text-align: center;
+}
+
+.milestoneListItem {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.milestoneListItem:hover {
+    background-color: var(--color-bg-panel);
+}
+
+.milestoneListItem.milestoneListItemActive {
+    background-color: var(--color-purple-deep);
+}
+
+.milestoneListItemTitle {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-soft-white);
+    margin-bottom: var(--space-xs);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.milestoneListItemMeta {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    font-size: 11px;
+    color: var(--color-text-disabled);
+}
+
+.milestoneListItemTags {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---- Form panel ---- */
+
+#milestonesFormPanel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-subtle);
+    background-color: var(--color-bg-elevated);
+    padding: var(--space-lg);
+}
+
+#milestonesFormMeta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-md);
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding-bottom: var(--space-md);
+}
+
+#milestoneTitleInput {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--color-text-soft-white);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+}
+
+#milestoneTitleInput::placeholder {
+    color: var(--color-text-disabled);
+}
+
+#milestoneTimestamp {
+    flex-shrink: 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+#milestoneDescriptionInput {
+    flex: 1;
+    resize: none;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    outline: none;
+    background-color: var(--color-bg-panel);
+    color: var(--color-text-soft-white);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-md);
+    line-height: 1.5;
+    padding: var(--space-md);
+}
+
+#milestoneDescriptionInput:focus {
+    border-color: var(--color-border-strong);
+}
+
+#milestoneDescriptionInput::placeholder {
+    color: var(--color-text-disabled);
+}
+
+#milestoneTagsInput {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border-subtle);
+    background-color: var(--color-bg-panel);
+    color: var(--color-text-soft-white);
+    font-size: var(--font-size-sm);
+    outline: none;
+}
+
+#milestoneTagsInput:focus {
+    border-color: var(--color-border-strong);
+}
+
+#milestonesFormFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border-subtle);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+#milestoneArchiveButton {
+    padding: var(--space-xs) var(--space-md);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-bg-panel);
+    color: var(--color-text-soft-white);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+#milestoneArchiveButton:hover:not(:disabled) {
+    border-color: var(--color-border-strong);
+    background-color: var(--color-purple-deep);
+}
+
+#milestoneArchiveButton:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}

@@ -1,0 +1,102 @@
+/* ===========================================
+   The Glitchcore Chronicle
+   css/ambient-effects.css — ambient background particles
+   ===========================================
+   Adapted from a separate project's "GlitchOS" atmosphere effect
+   (same idea: slow drifting particles + a soft gradient wash behind
+   the app), rebuilt on this project's own --color-* tokens instead
+   of the original --gos-* variables, and without the #gos-desktop
+   boot-pulse tie-in since Chronicle has no boot animation to sync to.
+
+   Pure CSS transform/opacity keyframes — no canvas, no rAF loop —
+   so it's cheap to leave running. Respects both the OS-level
+   prefers-reduced-motion query and the in-app "Reduced motion"
+   setting (js/settings.js toggles .chronicle-reduced-motion on
+   <html>; see js/ambient-effects.js for the JS side). */
+
+#ambientLayer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* Slow, near-static purple wash behind everything else. */
+.ambientGradient {
+    position: absolute;
+    inset: -10%;
+    background:
+        radial-gradient(circle at 30% 20%, rgba(139, 92, 246, 0.16), transparent 55%),
+        radial-gradient(circle at 75% 70%, rgba(139, 92, 246, 0.10), transparent 60%);
+    animation: ambientBreathe 18s ease-in-out infinite;
+    will-change: transform, opacity;
+}
+
+@keyframes ambientBreathe {
+    0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.75; }
+    50% { transform: scale(1.06) translate(1%, -1.5%); opacity: 1; }
+}
+
+.ambientParticleField {
+    position: absolute;
+    inset: 0;
+}
+
+.ambientParticle {
+    position: absolute;
+    bottom: -5%;
+    left: var(--particle-left, 50%);
+    width: var(--particle-size, 2px);
+    height: var(--particle-size, 2px);
+    border-radius: 50%;
+    background: var(--color-violet-electric);
+    opacity: var(--particle-opacity, 0.4);
+    box-shadow: 0 0 6px 1px rgba(139, 92, 246, 0.55);
+    animation: ambientParticleFloat var(--particle-dur, 24s) linear infinite;
+    animation-delay: var(--particle-delay, 0s);
+}
+
+@keyframes ambientParticleFloat {
+    0% {
+        transform: translate(0, 0);
+        opacity: 0;
+    }
+    8% {
+        opacity: var(--particle-opacity, 0.4);
+    }
+    92% {
+        opacity: var(--particle-opacity, 0.4);
+    }
+    100% {
+        transform: translate(var(--particle-drift, 0px), -115vh);
+        opacity: 0;
+    }
+}
+
+/* Belt-and-braces: honor the OS-level setting even if, for whatever
+   reason, the in-app toggle hasn't run yet (e.g. very first paint). */
+@media (prefers-reduced-motion: reduce) {
+    .ambientGradient,
+    .ambientParticle {
+        animation: none !important;
+    }
+}
+
+.chronicle-reduced-motion .ambientGradient,
+.chronicle-reduced-motion .ambientParticle {
+    animation: none !important;
+}
+
+/* Also switch off the route-fade and mobile slide transitions added
+   elsewhere (css/components.css, css/layout.css) when reduced motion
+   is on — same class, so one setting covers all of it. */
+.chronicle-reduced-motion .routeView.routeViewActive {
+    animation: none !important;
+}
+
+.chronicle-reduced-motion #appSidebar,
+.chronicle-reduced-motion #appMain,
+.chronicle-reduced-motion #mobileBackBtn {
+    transition: none !important;
+}

@@ -1,0 +1,26 @@
+{
+  "name": "glitchcore-chronicle",
+  "version": "0.1.0",
+  "description": "A personal digital chronicle — journal, brain dump, milestones, ideas, timeline.",
+  "main": "main.js",
+  "scripts": {
+  "start": "electron .",
+  "pack": "electron-builder --dir",
+  "dist": "electron-builder"
+  },
+  "author": "Sam",
+  "license": "UNLICENSED",
+  "private": true,
+  "devDependencies": {
+    "electron": "^31.7.7"
+  },
+  "dependencies": {
+    "electron-winstaller": "^5.4.4"
+  },
+  "allowScripts": {
+    "electron-winstaller@5.4.0": true,
+    "electron-winstaller@5.4.4": true,
+    "electron-builder@26.15.3": true,
+    "electron@31.7.7": true
+  }
+}

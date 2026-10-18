@@ -1,0 +1,75 @@
+/* ===========================================
+   The Glitchcore Chronicle
+   css/variables.css — design system tokens
+   MILESTONE 1: Foundation
+   ===========================================
+   Every color, spacing, and effect value the app uses should
+   originate here. Components should never hardcode a hex value —
+   reference a variable so the whole theme can shift from one file.
+*/
+
+:root {
+    /* ---- Core palette ---- */
+    --color-bg-base: #0a0710;
+    --color-bg-elevated: #130d20;
+    --color-bg-panel: #1a1226;
+
+    --color-purple-deep: #2e1a47;
+    --color-violet-electric: #8b5cf6;
+    --color-violet-electric-dim: #6d3fd1;
+
+    --color-gray-muted: #6b6478;
+    --color-text-soft-white: #f2eefb;
+    --color-text-secondary: #b9b0cc;
+    --color-text-disabled: #5c5468;
+
+    --color-border-subtle: rgba(139, 92, 246, 0.16);
+    --color-border-strong: rgba(139, 92, 246, 0.32);
+
+    --color-danger: #d1497a;
+    --color-success: #4fd1a5;
+
+    /* ---- Background image support ----
+       Set by settings once a custom wallpaper is chosen.
+       Falls back to a plain color, never breaks if unset. */
+    --bg-custom-image: none;
+    --bg-custom-overlay: rgba(10, 7, 16, 0.72);
+
+    /* ---- Glass / elevation ----
+       Used sparingly per design philosophy — only on floating
+       surfaces (dock, modals), never on primary layout panels. */
+    --glass-bg: rgba(26, 18, 38, 0.55);
+    --glass-border: rgba(139, 92, 246, 0.22);
+    --glass-blur: 18px;
+
+    /* ---- Spacing scale ---- */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 40px;
+
+    /* ---- Radii ---- */
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-pill: 999px;
+
+    /* ---- Typography ---- */
+    --font-family-base: -apple-system, "Segoe UI", Inter, system-ui, sans-serif;
+    --font-size-sm: 13px;
+    --font-size-md: 15px;
+    --font-size-lg: 20px;
+    --font-size-xl: 32px;
+
+    /* ---- Motion ----
+       Subtle, lightweight, premium. Nothing bouncy. */
+    --transition-fast: 120ms ease;
+    --transition-normal: 220ms ease;
+
+    /* ---- Layout dimensions ---- */
+    --header-height: 56px;
+    --footer-height: 32px;
+    --sidebar-width: 220px;
+    --dock-height: 64px;
+}

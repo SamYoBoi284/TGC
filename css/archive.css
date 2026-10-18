@@ -1,0 +1,183 @@
+/* ===========================================
+   The Glitchcore Chronicle
+   css/archive.css — Archive
+   MILESTONE 11: Archive
+   =========================================== */
+
+#archivePage {
+    height: 100%;
+}
+
+#archiveLayout {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+/* ---- Header ---- */
+
+#archiveHeader {
+    flex-shrink: 0;
+}
+
+#archiveHeaderTitle {
+    margin: 0 0 var(--space-xs) 0;
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text-soft-white);
+}
+
+#archiveHeaderSubtitle {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+/* ---- Results (mirrors search.css's group/card pattern) ---- */
+
+#archiveResultsScroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-subtle);
+    background-color: var(--color-bg-elevated);
+    padding: var(--space-lg);
+}
+
+#archiveEmptyState {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-disabled);
+    font-size: var(--font-size-md);
+    text-align: center;
+}
+
+.archiveResultGroup {
+    margin-bottom: var(--space-lg);
+}
+
+.archiveResultGroup:last-child {
+    margin-bottom: 0;
+}
+
+.archiveResultGroupTitle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-violet-electric);
+    margin: 0 0 var(--space-sm) 0;
+}
+
+.archiveResultGroupCount {
+    min-width: 20px;
+    padding: 1px var(--space-xs);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-bg-panel);
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    text-align: center;
+}
+
+.archiveResultGroupItems {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.archiveResultCard {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-md);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    background-color: var(--color-bg-panel);
+    padding: var(--space-md);
+}
+
+.archiveResultCardBody {
+    flex: 1;
+    min-width: 0;
+}
+
+.archiveResultCardHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xs);
+}
+
+.archiveResultCardTitle {
+    flex: 1;
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-text-soft-white);
+}
+
+.archiveResultCardMood {
+    flex-shrink: 0;
+    font-size: var(--font-size-md);
+}
+
+.archiveResultCardCategory {
+    flex-shrink: 0;
+    padding: 2px var(--space-sm);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-purple-deep);
+    color: var(--color-text-secondary);
+    font-size: 11px;
+}
+
+.archiveResultCardSnippet {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.archiveResultCardTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-top: var(--space-sm);
+}
+
+.archiveResultCardTag {
+    padding: 2px var(--space-sm);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border-subtle);
+    color: var(--color-text-disabled);
+    font-size: 11px;
+}
+
+/* ---- Restore button ---- */
+
+.archiveRestoreButton {
+    flex-shrink: 0;
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border-strong);
+    background-color: transparent;
+    color: var(--color-text-soft-white);
+    font-size: var(--font-size-sm);
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.archiveRestoreButton:hover {
+    background-color: var(--color-violet-electric);
+    border-color: var(--color-violet-electric);
+}
