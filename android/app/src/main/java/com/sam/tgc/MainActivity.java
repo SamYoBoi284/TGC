@@ -161,7 +161,7 @@ public final class MainActivity extends Activity {
             "window.__tgcVoiceResult = function(text, error) {" +
                 "var target = activeTarget;" +
                 "if (error) {" +
-                    "var status = document.getElementById('entriesSaveStatus') || document.getElementById('dumpSaveStatus');" +
+                    "var status = target && target.id === 'dumpCaptureInput' ? document.getElementById('dumpSaveStatus') : document.getElementById('entriesSaveStatus');" +
                     "if (status) status.textContent = error;" +
                     "return;" +
                 "}" +
