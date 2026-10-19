@@ -28,6 +28,7 @@ import { initSearch } from "./search.js";
 import { initOnThisDay } from "./onthisday.js";
 import { initArchive } from "./archive.js";
 import { initSettings } from "./settings.js";
+import { initMigrationUI } from "./migration.js";
 import { initAmbientEffects } from "./ambient-effects.js";
 
 let booted = false;
@@ -68,6 +69,7 @@ export function bootApp() {
     initOnThisDay();
     initArchive();
     initSettings();
+    initMigrationUI();
     initAmbientEffects();
 }
 
