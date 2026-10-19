@@ -45,6 +45,8 @@ public final class MainActivity extends Activity {
     private WebView webView;
     private int nativeTopInsetDp;
     private int nativeBottomInsetDp;
+    private int nativeLeftInsetDp;
+    private int nativeRightInsetDp;
     private WebViewAssetLoader assetLoader;
     private CredentialManager credentialManager;
     private final Executor callbackExecutor = Executors.newSingleThreadExecutor();
@@ -68,6 +70,8 @@ public final class MainActivity extends Activity {
             boolean imeVisible = windowInsets.isVisible(WindowInsetsCompat.Type.ime());
             float density = getResources().getDisplayMetrics().density;
             nativeTopInsetDp = Math.round(bars.top / density);
+            nativeLeftInsetDp = Math.round(bars.left / density);
+            nativeRightInsetDp = Math.round(bars.right / density);
             // adjustResize already shrinks the WebView for the keyboard. Do not add the IME inset again.
             nativeBottomInsetDp = imeVisible ? 0 : Math.round(bars.bottom / density);
             // Keep the WebView edge-to-edge; the app shell receives CSS safe-area values instead.
@@ -138,6 +142,8 @@ public final class MainActivity extends Activity {
             "if (!root) return;" +
             "root.style.setProperty('--tgc-native-inset-top', '" + nativeTopInsetDp + "px');" +
             "root.style.setProperty('--tgc-native-inset-bottom', '" + nativeBottomInsetDp + "px');" +
+            "root.style.setProperty('--tgc-native-inset-left', '" + nativeLeftInsetDp + "px');" +
+            "root.style.setProperty('--tgc-native-inset-right', '" + nativeRightInsetDp + "px');" +
         "})();";
         webView.evaluateJavascript(script, null);
     }
@@ -167,8 +173,8 @@ public final class MainActivity extends Activity {
                 "' .authGateCard { animation: tgcAndroidEnter 360ms cubic-bezier(.2,.75,.25,1) both; }' +" +
                 "' @keyframes tgcAndroidEnter { from { opacity: 0; transform: translateY(8px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }' +" +
                 "' @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } }' +" +
-                "' #appShell { box-sizing: border-box; height: 100dvh; padding-top: var(--tgc-native-inset-top, 0px); padding-bottom: var(--tgc-native-inset-bottom, 0px); }' +" +
-                "' #authGateScreen { box-sizing: border-box; padding-top: var(--tgc-native-inset-top, 0px); padding-bottom: var(--tgc-native-inset-bottom, 0px); }' +" +
+                "' #appShell { box-sizing: border-box; height: 100dvh; padding: var(--tgc-native-inset-top, 0px) var(--tgc-native-inset-right, 0px) var(--tgc-native-inset-bottom, 0px) var(--tgc-native-inset-left, 0px); }' +" +
+                "' #authGateScreen { box-sizing: border-box; padding: var(--tgc-native-inset-top, 0px) var(--tgc-native-inset-right, 0px) var(--tgc-native-inset-bottom, 0px) var(--tgc-native-inset-left, 0px); }' +" +
                 "' #appHeader { position: relative; background: linear-gradient(110deg, rgba(37,22,52,.99), rgba(12,8,20,.98) 68%); box-shadow: 0 6px 24px rgba(0,0,0,.22); }' +" +
                 "' #appHeader::after { content: \"\"; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: linear-gradient(90deg, transparent, rgba(166,111,255,.9), rgba(80,215,255,.45), transparent); pointer-events: none; }' +" +
                 "' #appBrandGlyph { filter: drop-shadow(0 0 7px rgba(154,96,255,.72)); animation: tgcAndroidGlyphBreath 3.2s ease-in-out infinite; }' +" +
