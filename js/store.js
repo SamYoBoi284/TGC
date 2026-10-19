@@ -1,10 +1,16 @@
 // Local-first collection storage. Cloud sync is an optional side effect.
 export const COLLECTION_NAMES = ["entries", "braindump", "milestones", "ideas"];
+let activeProfile = "account";
+export function setStorageProfile(profile) {
+    if (profile !== "account" && profile !== "guest") throw new Error("Unknown Chronicle storage profile.");
+    activeProfile = profile;
+}
+export function getStorageProfile() { return activeProfile; }
 const key = name => {
     if (!COLLECTION_NAMES.includes(name)) throw new Error("Unknown Chronicle collection: " + name);
-    return "chronicle." + name;
+    return activeProfile === "guest" ? "chronicle.guest." + name : "chronicle." + name;
 };
-const recoveryKey = name => "chronicle.recovery." + name;
+const recoveryKey = name => activeProfile === "guest" ? "chronicle.guest.recovery." + name : "chronicle.recovery." + name;
 function parseRecords(raw) {
     if (raw == null) return null;
     try { const value = JSON.parse(raw); return Array.isArray(value) ? value : null; }
@@ -14,6 +20,7 @@ function emit(type, detail) {
     if (typeof window !== "undefined" && typeof CustomEvent !== "undefined") window.dispatchEvent(new CustomEvent(type, { detail }));
 }
 function enqueueSync(name) {
+    if (activeProfile === "guest") return;
     try {
         const settings = JSON.parse(localStorage.getItem("chronicle.settings") || "null");
         if (settings?.sync?.enabled) import("./syncqueue.js").then(m => m.enqueueSync(name)).catch(err => console.warn("Optional cloud sync failed:", err));
@@ -123,6 +130,26 @@ export function replaceCollections(collections) {
 }
 export function readCollectionsSnapshot() {
     return Object.fromEntries(COLLECTION_NAMES.map(name => [name, readForBackup(name)]));
+}
+
+export function clearRecoveryCopies() {
+    let removed = 0;
+    for (const name of COLLECTION_NAMES) {
+        const recovery = recoveryKey(name);
+        if (localStorage.getItem(recovery) !== null) { localStorage.removeItem(recovery); removed += 1; }
+    }
+    return removed;
+}
+
+export function deleteArchivedRecords() {
+    const current = readCollectionsSnapshot();
+    const counts = Object.fromEntries(COLLECTION_NAMES.map(name => [name, current[name].filter(record => record?.archived === true).length]));
+    const affected = COLLECTION_NAMES.filter(name => counts[name] > 0);
+    if (!affected.length) return counts;
+    const next = Object.fromEntries(COLLECTION_NAMES.map(name => [name, current[name].filter(record => record?.archived !== true)]));
+    replaceCollections(next);
+    for (const name of affected) localStorage.removeItem(recoveryKey(name));
+    return counts;
 }
 function generateId() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 9); }
 export function openCollection(name) {
