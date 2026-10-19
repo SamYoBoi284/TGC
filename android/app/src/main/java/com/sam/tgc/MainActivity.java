@@ -165,7 +165,7 @@ public final class MainActivity extends Activity {
                     "if (!range || !target.contains(range.commonAncestorContainer)) { range = document.createRange(); range.selectNodeContents(target); range.collapse(false); }" +
                     "var prefix = range.startContainer && range.startContainer.textContent ? range.startContainer.textContent.slice(0, range.startOffset) : '';" +
                     "var suffix = range.startContainer && range.startContainer.textContent ? range.startContainer.textContent.slice(range.startOffset) : '';" +
-                    "var insert = (prefix && !/\\\\s$/.test(prefix) ? ' ' : '') + text + (suffix && !/^\\\\s/.test(suffix) ? ' ' : '');" +
+                    "var insert = (prefix && !/\\s$/.test(prefix) ? ' ' : '') + text + (suffix && !/^\\s/.test(suffix) ? ' ' : '');" +
                     "range.deleteContents(); var node = document.createTextNode(insert); range.insertNode(node);" +
                     "range.setStartAfter(node); range.collapse(true); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);" +
                     "target.dispatchEvent(new Event('input', {bubbles:true}));" +
@@ -173,7 +173,7 @@ public final class MainActivity extends Activity {
                     "var start = target.selectionStart == null ? target.value.length : target.selectionStart;" +
                     "var end = target.selectionEnd == null ? start : target.selectionEnd;" +
                     "var before = target.value.slice(0,start), after = target.value.slice(end);" +
-                    "var insert = (before && !/\\\\s$/.test(before) ? ' ' : '') + text + (after && !/^\\\\s/.test(after) ? ' ' : '');" +
+                    "var insert = (before && !/\\s$/.test(before) ? ' ' : '') + text + (after && !/^\\s/.test(after) ? ' ' : '');" +
                     "target.setRangeText(insert, start, end, 'end'); target.dispatchEvent(new Event('input', {bubbles:true})); target.focus();" +
                 "}" +
             "}" +
