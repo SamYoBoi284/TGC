@@ -1,8 +1,14 @@
 package com.sam.tgc;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
+import android.widget.Toast;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -15,6 +21,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -34,6 +41,7 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.concurrent.Executor;
@@ -42,6 +50,8 @@ import java.util.concurrent.Executors;
 public final class MainActivity extends Activity {
     private static final String APP_ORIGIN = "https://appassets.androidplatform.net";
     private static final int REQUEST_SPEECH_INPUT = 8107;
+    private static final int REQUEST_INSTALL_UPDATE = 8111;
+    private File pendingUpdateApk;
     private WebView webView;
     private int nativeTopInsetDp;
     private int nativeBottomInsetDp;
@@ -98,6 +108,7 @@ public final class MainActivity extends Activity {
 
         webView.addJavascriptInterface(new NativeGoogleSignInBridge(), "TGCNativeAuth");
         webView.addJavascriptInterface(new NativeVoiceBridge(), "TGCNativeVoice");
+        webView.addJavascriptInterface(new NativeUpdateBridge(), "TGCNativeUpdates");
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -118,6 +129,7 @@ public final class MainActivity extends Activity {
                     applyNativeInsetsToWebView();
                     installAndroidExperienceUi();
                     installVoiceInputUi();
+                    installUpdateUi();
                 }
             }
         });
@@ -295,6 +307,133 @@ public final class MainActivity extends Activity {
         webView.evaluateJavascript(script, null);
     }
 
+
+    private void installUpdateUi() {
+        if (webView == null || isFinishing()) return;
+        String script = "(function(){var h=document.getElementById('appHeaderActions');if(!h||h.querySelector('#tgcUpdateBtn'))return;var b=document.createElement('button');b.id='tgcUpdateBtn';b.type='button';b.textContent='↻';b.title='Check for updates';b.setAttribute('aria-label','Check for updates');b.style.cssText='min-width:38px;height:36px;margin-left:8px;padding:0 10px;border:1px solid rgba(166,111,255,.45);border-radius:10px;background:rgba(125,72,190,.22);color:var(--color-text-soft-white,#f4effa);font-size:20px;font-weight:700;cursor:pointer';b.onclick=function(){if(window.TGCNativeUpdates)window.TGCNativeUpdates.checkForUpdates()};h.appendChild(b)})();";
+        webView.evaluateJavascript(script, null);
+    }
+
+    private final class NativeUpdateBridge {
+        @JavascriptInterface
+        public void checkForUpdates() {
+            runOnUiThread(() -> checkForUpdatesFromUi());
+        }
+    }
+
+    private void checkForUpdatesFromUi() {
+        if (isFinishing()) return;
+        Toast.makeText(this, "Checking for TGC updates...", Toast.LENGTH_SHORT).show();
+        TgcUpdater.checkLatest(this, new TgcUpdater.CheckCallback() {
+            @Override public void onResult(TgcUpdater.ReleaseInfo release, boolean updateAvailable) {
+                if (isFinishing()) return;
+                if (!updateAvailable) {
+                    new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("TGC is up to date")
+                        .setMessage("Installed version: " + BuildConfig.VERSION_NAME + "\nLatest release: " + release.version)
+                        .setPositiveButton("OK", null)
+                        .setNeutralButton("Release notes", (dialog, which) -> openReleasePage(release.tag))
+                        .show();
+                    return;
+                }
+                String notes = release.notes == null || release.notes.trim().isEmpty()
+                    ? "No release notes were provided." : release.notes;
+                new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("TGC update " + release.version + " available")
+                    .setMessage(notes + "\n\nInstalled version: " + BuildConfig.VERSION_NAME)
+                    .setNegativeButton("Later", null)
+                    .setNeutralButton("Release page", (dialog, which) -> openReleasePage(release.tag))
+                    .setPositiveButton("Download & install", (dialog, which) -> downloadUpdate(release))
+                    .show();
+            }
+            @Override public void onError(Exception error) {
+                if (isFinishing()) return;
+                new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Could not check for updates")
+                    .setMessage(error.getMessage() == null ? "Check your internet connection and try again." : error.getMessage())
+                    .setPositiveButton("OK", null).show();
+            }
+        });
+    }
+
+    private void openReleasePage(String tag) {
+        try {
+            String url = "latest".equals(tag)
+                ? "https://github.com/SamYoBoi284/TGC/releases/latest"
+                : "https://github.com/SamYoBoi284/TGC/releases/tag/" + Uri.encode(tag);
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        } catch (RuntimeException ignored) {
+            Toast.makeText(this, "Could not open the release page.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void downloadUpdate(TgcUpdater.ReleaseInfo release) {
+        ProgressDialog progress = new ProgressDialog(this);
+        progress.setTitle("Downloading TGC update");
+        progress.setMessage("Verifying the APK before installation...");
+        progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progress.setMax(100);
+        progress.setProgress(0);
+        progress.setCancelable(false);
+        progress.setButton(ProgressDialog.BUTTON_NEGATIVE, "Hide", (dialog, which) -> dialog.dismiss());
+        progress.show();
+        TgcUpdater.downloadAndVerify(this, release, new TgcUpdater.DownloadCallback() {
+            @Override public void onProgress(int percent, long downloaded, long total) {
+                if (progress.isShowing() && percent >= 0) progress.setProgress(percent);
+                if (progress.isShowing() && total > 0) {
+                    progress.setMessage("Downloaded "
+                        + android.text.format.Formatter.formatShortFileSize(MainActivity.this, downloaded)
+                        + " of " + android.text.format.Formatter.formatShortFileSize(MainActivity.this, total)
+                        + "\nVerifying SHA-256...");
+                }
+            }
+            @Override public void onComplete(File apk) {
+                if (progress.isShowing()) progress.dismiss();
+                installVerifiedUpdate(apk);
+            }
+            @Override public void onError(Exception error) {
+                if (progress.isShowing()) progress.dismiss();
+                if (isFinishing()) return;
+                new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Update download failed")
+                    .setMessage(error.getMessage() == null ? "The update could not be downloaded or verified." : error.getMessage())
+                    .setPositiveButton("OK", null).show();
+            }
+        });
+    }
+
+    private void installVerifiedUpdate(File apk) {
+        if (apk == null || !apk.isFile()) {
+            Toast.makeText(this, "The verified update APK is missing.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !getPackageManager().canRequestPackageInstalls()) {
+            pendingUpdateApk = apk;
+            new AlertDialog.Builder(this)
+                .setTitle("Allow TGC to install updates")
+                .setMessage("Android needs permission to install the update downloaded by TGC. Enable Allow from this source, then return here.")
+                .setNegativeButton("Cancel", (dialog, which) -> pendingUpdateApk = null)
+                .setPositiveButton("Open settings", (dialog, which) -> startActivityForResult(
+                    new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName())),
+                    REQUEST_INSTALL_UPDATE))
+                .show();
+            return;
+        }
+        try {
+            Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".updates", apk);
+            Intent install = new Intent(Intent.ACTION_VIEW);
+            install.setDataAndType(uri, "application/vnd.android.package-archive");
+            install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(install);
+        } catch (RuntimeException error) {
+            new AlertDialog.Builder(this)
+                .setTitle("Could not open Android installer")
+                .setMessage(error.getMessage() == null ? "Open the release page to install the APK manually." : error.getMessage())
+                .setPositiveButton("Release page", (dialog, which) -> openReleasePage("latest"))
+                .setNegativeButton("Cancel", null).show();
+        }
+    }
+
     private final class NativeGoogleSignInBridge {
         @JavascriptInterface
         public void signIn() {
@@ -328,6 +467,17 @@ public final class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_INSTALL_UPDATE) {
+            File apk = pendingUpdateApk;
+            pendingUpdateApk = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                    && getPackageManager().canRequestPackageInstalls() && apk != null) {
+                installVerifiedUpdate(apk);
+            } else if (apk != null) {
+                Toast.makeText(this, "Installation permission was not enabled.", Toast.LENGTH_LONG).show();
+            }
+            return;
+        }
         if (requestCode != REQUEST_SPEECH_INPUT) return;
         if (resultCode != RESULT_OK || data == null) return;
         ArrayList<String> matches = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
@@ -452,6 +602,7 @@ public final class MainActivity extends Activity {
         if (webView != null) {
             webView.removeJavascriptInterface("TGCNativeAuth");
             webView.removeJavascriptInterface("TGCNativeVoice");
+            webView.removeJavascriptInterface("TGCNativeUpdates");
             webView.destroy();
             webView = null;
         }

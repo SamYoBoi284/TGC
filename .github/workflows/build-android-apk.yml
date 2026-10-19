@@ -6,6 +6,7 @@ on:
       - main
       - "feat/native-android-apk-github-actions"
       - "feat/phase10-android-visual-polish"
+      - "feat/tgc-release-updater-final-2026-10-19"
       - "feat/phase6-guest-account-migration"
       - "feat/phase7-backup-restore-safety"
       - "feat/phase7-voice-input"
