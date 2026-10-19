@@ -129,7 +129,7 @@ function renderPreview(sourceLabel, backup, current, onCancel) {
     }).join("");
     el.innerHTML = `
       <h2 class="settingsSectionTitle">Restore preview</h2>
-      <p class="settingsRowHint">Source: ${sourceLabel}. No data has changed yet. Choose Merge to preserve current records, or Replace to restore the backup after creating a safety copy.</p>
+      <p class="settingsRowHint">Source: [SOURCE_LABEL]. No data has changed yet. Choose Merge to preserve current records, or Replace to restore the backup after creating a safety copy.</p>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th scope="col">Collection</th><th scope="col">Current</th><th scope="col">Backup</th><th scope="col">Identical</th><th scope="col">ID conflicts</th></tr></thead><tbody>${lines}</tbody></table></div>
       <p class="settingsRowHint">Merge keeps existing records, skips identical duplicates, and gives conflicting backup records new IDs. Replace swaps all four collections but first saves and downloads a pre-restore safety copy.</p>
       <div class="settingsRowControl" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
@@ -139,6 +139,8 @@ function renderPreview(sourceLabel, backup, current, onCancel) {
       </div>
       <p class="settingsStatusText" id="settingsRestorePreviewStatus"></p>`;
     el.hidden = false;
+    const sourceDescription = el.querySelector(".settingsRowHint");
+    if (sourceDescription) sourceDescription.textContent = "Source: " + sourceLabel + ". No data has changed yet. Choose Merge to preserve current records, or Replace to restore the backup after creating a safety copy.";
     el.querySelector("#settingsRestoreCancelBtn").addEventListener("click", () => { const cb = pending?.onCancel; clearPreview(); cb?.(); });
     el.querySelector("#settingsRestoreMergeBtn").addEventListener("click", () => applyRestore("merge"));
     el.querySelector("#settingsRestoreReplaceBtn").addEventListener("click", () => applyRestore("replace"));
