@@ -301,34 +301,59 @@ export async function signInWithGoogle(config = DEFAULT_FIREBASE_CONFIG) {
     try {
         await ensureAuthListening(config);
         const auth = authModules;
-        const provider = new auth.GoogleAuthProvider();
 
-        // POPUP FIRST, even on mobile/standalone PWA. signInWithRedirect
-        // was found to silently fail on an installed Android PWA: the
-        // full-page navigation to accounts.google.com and back lands in
-        // a different storage partition than the one Firebase wrote the
-        // pending-redirect record to, so getRedirectResult() comes back
-        // empty with no error at all — the user just lands back on the
-        // login screen. Popup avoids this entirely since everything
-        // happens in the same window/storage context. Only fall back to
-        // redirect if the popup is actually blocked (some in-app
-        // browsers/webviews do refuse window.open).
-        try {
-            const result = await auth.signInWithPopup(authInstance, provider);
-            // onAuthStateChanged (wired above) also fires and sets
-            // currentUser, but set it directly here too so the caller
-            // gets it back without a race against that async callback.
+        // Android uses Credential Manager for the account picker, then
+        // exchanges the Google ID token through the existing Firebase SDK.
+        if (window.TGCNativeAuth && typeof window.TGCNativeAuth.signIn === "function") {
+            const idToken = await new Promise((resolve, reject) => {
+                let settled = false;
+                const timeout = window.setTimeout(() => {
+                    if (settled) return;
+                    settled = true;
+                    window.__tgcNativeAuthResult = null;
+                    reject(new Error("Google sign-in timed out. Please try again."));
+                }, 120000);
+
+                window.__tgcNativeAuthResult = (token, error) => {
+                    if (settled) return;
+                    settled = true;
+                    window.clearTimeout(timeout);
+                    window.__tgcNativeAuthResult = null;
+                    if (token) resolve(token);
+                    else reject(new Error(error || "Google sign-in was cancelled or failed."));
+                };
+
+                try {
+                    window.TGCNativeAuth.signIn();
+                } catch (err) {
+                    settled = true;
+                    window.clearTimeout(timeout);
+                    window.__tgcNativeAuthResult = null;
+                    reject(err);
+                }
+            });
+
+            const credential = auth.GoogleAuthProvider.credential(idToken);
+            const result = await auth.signInWithCredential(authInstance, credential);
             currentUser = result.user;
             authListeners.forEach(fn => fn(currentUser));
+            return {
+                ok: true,
+                user: { uid: currentUser.uid, email: currentUser.email, displayName: currentUser.displayName },
+                error: null
+            };
+        }
 
+        // Existing browser and Electron sign-in remains unchanged.
+        const provider = new auth.GoogleAuthProvider();
+        try {
+            const result = await auth.signInWithPopup(authInstance, provider);
+            currentUser = result.user;
+            authListeners.forEach(fn => fn(currentUser));
             return { ok: true, user: { uid: currentUser.uid, email: currentUser.email, displayName: currentUser.displayName }, error: null };
         } catch (popupErr) {
             const blockedCodes = ["auth/popup-blocked", "auth/operation-not-supported-in-this-environment"];
             if (shouldUseRedirectFlow() && blockedCodes.includes(popupErr?.code)) {
-                // Navigates the page away to accounts.google.com; the app
-                // reloads on return, restoreAuthSession() + the
-                // onAuthStateChanged listener above pick the session back
-                // up automatically. Nothing resolves here in that case.
                 await auth.signInWithRedirect(authInstance, provider);
                 return { ok: true, user: null, redirecting: true, error: null };
             }
@@ -339,7 +364,6 @@ export async function signInWithGoogle(config = DEFAULT_FIREBASE_CONFIG) {
         return { ok: false, user: null, error: err?.message || "Sign-in failed." };
     }
 }
-
 export async function signOutUser() {
     if (!authInstance) return { ok: true };
     try {
