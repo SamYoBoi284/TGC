@@ -20,7 +20,7 @@ Support guest/local use and signed-in accounts without mixing their data.
 ## Phase 6 — Safe Guest-to-Account Migration
 Preview migration, preserve the guest source, handle duplicates and ID conflicts, and retain a recoverable safety copy.
 
-## Phase 7 — Voice Input (CURRENT)
+## Phase 7 — Voice Input (TESTED BY USER)
 - Add an accessible microphone control to the journal editor and Brain Dump.
 - Use Android speech-to-text and return the transcript to the active editing field.
 - Let the user review and edit the transcript before the normal autosave/persistence path saves it.
@@ -29,8 +29,14 @@ Preview migration, preserve the guest source, handle duplicates and ID conflicts
 - Keep the implementation native-Android-specific. Do not modify the separate web/Electron experience.
 - Verify that existing editing, autosave, local storage, Google sign-in, guest mode, and dynamic system insets remain intact.
 
-## Phase 8 — GitHub Actions and APK Builds
-Build installable Android APK artifacts through GitHub Actions, report failures accurately, and keep release publication separate from artifact builds. Never create releases or tags without explicit approval.
+## Phase 8 — GitHub Actions and APK Builds (CURRENT)
+- Build a debug APK first so pull requests can validate Android compilation without access to signing secrets.
+- Upload the debug APK as a downloadable GitHub Actions artifact with a defined retention period.
+- For trusted push/workflow-dispatch runs, build the signed release APK using repository secrets and verify its signature before uploading it as a separate artifact.
+- Never expose signing secrets to pull-request builds; never generate a fallback release signing key when required secrets are missing.
+- Validate JavaScript module syntax and fail clearly when required build inputs or artifacts are missing.
+- Keep artifacts separate from GitHub Releases. Do not publish releases or create tags without explicit approval.
+- Verify successful debug and signed-release workflow runs, artifact availability, and the install/update behavior of the resulting APKs.
 
 ## Phase 9 — Data Safety and Backup
 Preserve existing records across upgrades, validate imports, preview restores, protect against duplicates/conflicts, and keep recovery paths available. This phase also retains the additional guest-migration and backup/restore safety work that was mistakenly numbered as a separate Phase 7; those features are valuable and must not be removed.
