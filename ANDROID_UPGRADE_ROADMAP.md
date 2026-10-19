@@ -40,10 +40,11 @@ Preview migration, preserve the guest source, handle duplicates and ID conflicts
 
 ## Phase 9 — Data Safety and Backup (CURRENT)
 - Keep existing local-first storage, profile separation, recovery-copy behavior, and migration/restore safety features intact.
-- Add automated regression tests for account/guest isolation, recovery from malformed primary data, refusing writes over unrecoverable data, refusing incomplete backup snapshots, validating full replacements, rollback after a failed multi-collection write, and successful replacement.
+- Add automated regression tests for profile separation before migration; explicit guest-to-account migration; preserving account and guest records; duplicate detection; same-ID conflict preservation; retry idempotency; refusing migration from the guest profile; and refusing to proceed if the pre-migration safety backup cannot be saved. Also test recovery from malformed primary data, refusing writes over unrecoverable data, refusing incomplete backup snapshots, validating full replacements, rollback after a failed multi-collection write, and successful replacement.
 - Run these tests in GitHub Actions before building APKs so data-safety regressions fail the pipeline early.
 - Keep this phase scoped to tests, CI, and roadmap documentation; do not modify shared runtime JS, UI, or the separate web/Electron behavior without an explicitly agreed reason.
 - Do not claim tests pass until the new CI run confirms it.
+- Keep the distinction explicit: account/guest storage is separate before migration; the user-initiated migration merges eligible guest records into the account while retaining the guest source and a pre-migration account backup.
 
 ## Phase 10 — UI Edits and UX Enhancements
 Improve the Android app's interface and usability without a wholesale redesign or breaking working behavior.
