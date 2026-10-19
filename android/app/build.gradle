@@ -6,6 +6,12 @@ def googleWebClientId = (project.findProperty('googleWebClientId')
         ?: System.getenv('TGC_GOOGLE_WEB_CLIENT_ID')
         ?: '').toString().trim()
 
+def signingStorePath = (System.getenv('TGC_ANDROID_KEYSTORE_PATH') ?: '').trim()
+def signingStorePassword = System.getenv('TGC_ANDROID_KEYSTORE_PASSWORD') ?: ''
+def signingKeyAlias = System.getenv('TGC_ANDROID_KEY_ALIAS') ?: ''
+def signingKeyPassword = System.getenv('TGC_ANDROID_KEY_PASSWORD') ?: ''
+def hasCiSigning = signingStorePath && signingStorePassword && signingKeyAlias && signingKeyPassword
+
 android {
     namespace 'com.sam.tgc'
     compileSdk 35
@@ -21,6 +27,25 @@ android {
 
     buildFeatures {
         buildConfig true
+    }
+
+    if (hasCiSigning) {
+        signingConfigs {
+            ci {
+                storeFile file(signingStorePath)
+                storePassword signingStorePassword
+                keyAlias signingKeyAlias
+                keyPassword signingKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            if (hasCiSigning) {
+                signingConfig signingConfigs.ci
+            }
+        }
     }
 }
 
