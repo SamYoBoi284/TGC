@@ -1,8 +1,14 @@
 package com.sam.tgc;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
+import android.widget.Toast;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -15,6 +21,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -34,6 +41,7 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.concurrent.Executor;
@@ -42,6 +50,8 @@ import java.util.concurrent.Executors;
 public final class MainActivity extends Activity {
     private static final String APP_ORIGIN = "https://appassets.androidplatform.net";
     private static final int REQUEST_SPEECH_INPUT = 8107;
+    private static final int REQUEST_INSTALL_UPDATE = 8111;
+    private File pendingUpdateApk;
     private WebView webView;
     private int nativeTopInsetDp;
     private int nativeBottomInsetDp;
@@ -98,6 +108,7 @@ public final class MainActivity extends Activity {
 
         webView.addJavascriptInterface(new NativeGoogleSignInBridge(), "TGCNativeAuth");
         webView.addJavascriptInterface(new NativeVoiceBridge(), "TGCNativeVoice");
+        webView.addJavascriptInterface(new NativeUpdateBridge(), "TGCNativeUpdates");
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -118,6 +129,7 @@ public final class MainActivity extends Activity {
                     applyNativeInsetsToWebView();
                     installAndroidExperienceUi();
                     installVoiceInputUi();
+                    installUpdateUi();
                 }
             }
         });
