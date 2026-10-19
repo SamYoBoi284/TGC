@@ -9,6 +9,7 @@ on:
       - "feat/phase7-backup-restore-safety"
       - "feat/phase7-voice-input"
       - "feat/phase8-apk-build-pipeline"
+      - "feat/phase9-data-safety-tests"
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -63,6 +64,9 @@ jobs:
           for file in js/*.js; do
             node --input-type=module --check < "$file"
           done
+
+      - name: Test local data safety and recovery
+        run: node --experimental-default-type=module --test tests/data-safety.test.mjs
 
       - name: Build debug APK first
         run: |
