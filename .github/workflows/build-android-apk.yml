@@ -48,7 +48,7 @@ jobs:
           cp assets/icon-512.png android/app/src/main/res/mipmap-nodpi/ic_launcher.png
           test -s android/app/src/main/res/mipmap-nodpi/ic_launcher.png
 
-      - name: Prepare stable Android signing key
+      - name: Prepare stable Android signing key (required for release builds)
         env:
           TGC_ANDROID_KEYSTORE_BASE64: ${{ secrets.TGC_ANDROID_KEYSTORE_BASE64 }}
           TGC_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.TGC_ANDROID_KEYSTORE_PASSWORD }}
@@ -56,10 +56,7 @@ jobs:
           TGC_ANDROID_KEY_PASSWORD: ${{ secrets.TGC_ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          if [ -z "$TGC_ANDROID_KEYSTORE_BASE64" ]; then
-            echo "Stable keystore secret not configured; Gradle will use its default debug key."
-            exit 0
-          fi
+          test -n "$TGC_ANDROID_KEYSTORE_BASE64" || { echo "Missing TGC_ANDROID_KEYSTORE_BASE64 secret; refusing to create an incorrectly signed release APK."; exit 1; }
           test -n "$TGC_ANDROID_KEYSTORE_PASSWORD" || { echo "Missing TGC_ANDROID_KEYSTORE_PASSWORD secret"; exit 1; }
           test -n "$TGC_ANDROID_KEY_ALIAS" || { echo "Missing TGC_ANDROID_KEY_ALIAS secret"; exit 1; }
           test -n "$TGC_ANDROID_KEY_PASSWORD" || { echo "Missing TGC_ANDROID_KEY_PASSWORD secret"; exit 1; }
@@ -76,22 +73,28 @@ jobs:
         with:
           gradle-version: "8.10"
 
-      - name: Build debug APK
+      - name: Build signed release APK
         env:
           TGC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.TGC_GOOGLE_WEB_CLIENT_ID }}
-        run: gradle --no-daemon -p android assembleDebug
-
-      - name: Verify APK and print signing certificate fingerprints
         run: |
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -n "$TGC_GOOGLE_WEB_CLIENT_ID" || { echo "Missing TGC_GOOGLE_WEB_CLIENT_ID secret."; exit 1; }
+          gradle --no-daemon -p android assembleRelease
+          APK="android/app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
+          cp "$APK" "$RUNNER_TEMP/The-Glitchcore-Chronicle.apk"
+          test -s "$RUNNER_TEMP/The-Glitchcore-Chronicle.apk"
+
+      - name: Verify signed release APK and print signing certificate fingerprints
+        run: |
+          APK="$RUNNER_TEMP/The-Glitchcore-Chronicle.apk"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK"
 
-      - name: Upload installable APK
+      # Actions artifact only: this workflow never creates a GitHub Release.
+      - name: Upload installable release APK
         uses: actions/upload-artifact@v4
         with:
-          name: tgc-android-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: The-Glitchcore-Chronicle-Android
+          path: ${{ runner.temp }}/The-Glitchcore-Chronicle.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30

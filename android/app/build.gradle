@@ -46,6 +46,12 @@ android {
                 signingConfig signingConfigs.ci
             }
         }
+        release {
+            if (hasCiSigning) {
+                signingConfig signingConfigs.ci
+            }
+            minifyEnabled false
+        }
     }
 }
 

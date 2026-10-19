@@ -1,3 +1,4 @@
+import { replaceCollections } from "./store.js";
 // ===========================================
 // The Glitchcore Chronicle
 // js/syncqueue.js
@@ -184,13 +185,13 @@ export async function restoreSnapshot(snapshotId) {
         throw new Error("That backup couldn't be found — it may have been deleted.");
     }
 
-    const results = {};
+    const collections = {};
     for (const name of EXPORTED_COLLECTIONS) {
-        const records = doc.collections[name] || [];
-        localStorage.setItem(`chronicle.${name}`, JSON.stringify(records));
-        results[name] = records.length;
+        const records = doc.collections[name];
+        if (!Array.isArray(records)) throw new Error("That backup is incomplete: the " + name + " collection is missing or invalid.");
+        collections[name] = records;
     }
-    return results;
+    return replaceCollections(collections);
 }
 
 export function getQueueStatus() {

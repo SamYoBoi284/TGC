@@ -1,3 +1,5 @@
+import { COLLECTION_NAMES, readCollectionsSnapshot, replaceCollections } from "./store.js";
+
 // ===========================================
 // The Glitchcore Chronicle
 // js/settings.js
@@ -577,68 +579,61 @@ function setDataStatus(text) {
     if (el) el.textContent = text;
 }
 
-const EXPORTED_COLLECTIONS = ["entries", "braindump", "milestones", "ideas"];
-
 function handleExport() {
+    let collections;
+    try { collections = readCollectionsSnapshot(); }
+    catch (err) {
+        console.warn("Chronicle export stopped:", err);
+        setDataStatus("Export failed: " + (err?.message || "local data could not be read"));
+        return;
+    }
     const payload = {
+        format: "the-glitchcore-chronicle-backup",
+        schemaVersion: 1,
         exportedAt: new Date().toISOString(),
         appVersion: APP_VERSION,
-        collections: {}
+        collections
     };
-
-    EXPORTED_COLLECTIONS.forEach(name => {
-        try {
-            const raw = localStorage.getItem(`chronicle.${name}`);
-            payload.collections[name] = raw ? JSON.parse(raw) : [];
-        } catch {
-            payload.collections[name] = [];
-        }
-    });
-
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    const stamp = new Date().toISOString().slice(0, 10);
     a.href = url;
-    a.download = `glitchcore-chronicle-backup-${stamp}.json`;
+    a.download = "glitchcore-chronicle-backup-" + new Date().toISOString().slice(0, 10) + ".json";
     a.click();
-    URL.revokeObjectURL(url);
-
-    setDataStatus("Exported.");
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setDataStatus("Local backup exported.");
 }
 
 function handleImportFileChosen() {
     const input = document.getElementById("settingsImportInput");
     const file = input?.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = () => {
         try {
-            const parsed = JSON.parse(reader.result);
-            const collections = parsed.collections || {};
-
-            const confirmed = window.confirm(
-                "Importing will replace your current entries, brain dump, milestones, and ideas with the contents of this file. This can't be undone. Continue?"
-            );
-            if (!confirmed) {
+            const parsed = JSON.parse(String(reader.result || ""));
+            const collections = parsed?.collections;
+            if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) ||
+                !collections || typeof collections !== "object" || Array.isArray(collections)) {
+                throw new Error("The selected file is not a valid Chronicle backup.");
+            }
+            for (const name of COLLECTION_NAMES) {
+                if (!Array.isArray(collections[name])) throw new Error("The backup is missing the " + name + " collection.");
+            }
+            if (!window.confirm("Importing will replace your current entries, brain dump, milestones, and ideas with the contents of this file. A recovery copy of current local data will be kept where possible. Continue?")) {
                 setDataStatus("Import cancelled.");
                 return;
             }
-
-            EXPORTED_COLLECTIONS.forEach(name => {
-                if (Array.isArray(collections[name])) {
-                    localStorage.setItem(`chronicle.${name}`, JSON.stringify(collections[name]));
-                }
-            });
-
-            setDataStatus("Imported. Reloading…");
-            setTimeout(() => window.location.reload(), 600);
+            const counts = replaceCollections(collections);
+            const summary = Object.entries(counts).map(([name, count]) => count + " " + name).join(", ");
+            setDataStatus("Imported successfully (" + summary + "). Reloading…");
+            setTimeout(() => window.location.reload(), 800);
         } catch (err) {
-            console.warn("Import failed:", err);
-            setDataStatus("That file couldn't be read as a chronicle backup.");
+            console.warn("Chronicle import failed:", err);
+            setDataStatus("Import failed: " + (err?.message || "That file could not be read"));
         }
     };
+    reader.onerror = () => setDataStatus("Import failed: the selected file could not be read.");
     reader.readAsText(file);
     input.value = "";
 }
