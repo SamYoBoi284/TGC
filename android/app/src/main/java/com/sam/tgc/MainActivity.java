@@ -27,7 +27,6 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import androidx.webkit.WebViewAssetLoader;
 
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
-import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException;
 
 import org.json.JSONObject;
 
@@ -135,13 +134,9 @@ public final class MainActivity extends Activity {
                     if (credential instanceof CustomCredential
                             && GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(
                                 ((CustomCredential) credential).getType())) {
-                        try {
-                            GoogleIdTokenCredential googleCredential =
-                                GoogleIdTokenCredential.createFrom(credential.getData());
-                            deliverAuthResult(googleCredential.getIdToken(), null);
-                        } catch (GoogleIdTokenParsingException e) {
-                            deliverAuthResult(null, "Google returned a credential that could not be read.");
-                        }
+                        GoogleIdTokenCredential googleCredential =
+                            GoogleIdTokenCredential.createFrom(credential.getData());
+                        deliverAuthResult(googleCredential.getIdToken(), null);
                     } else {
                         deliverAuthResult(null, "Google returned an unsupported sign-in credential.");
                     }
