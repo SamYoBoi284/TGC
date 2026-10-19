@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { migrateGuestDataToAccount, previewGuestMigration } from "../js/migration.js";
 import {
     COLLECTION_NAMES,
     setStorageProfile,
@@ -39,7 +40,7 @@ function emptyCollections() {
     return Object.fromEntries(COLLECTION_NAMES.map(name => [name, []]));
 }
 
-test("account and guest collections remain isolated", () => {
+test("account and guest storage remain separate before explicit migration", () => {
     const storage = freshStorage();
     openCollection("entries").create({ title: "account record" });
     setStorageProfile("guest");
@@ -102,4 +103,90 @@ test("a valid full replacement preserves all four collections", () => {
     const counts = replaceCollections(replacement);
     assert.deepEqual(counts, Object.fromEntries(COLLECTION_NAMES.map(name => [name, 1])));
     assert.deepEqual(readCollectionsSnapshot(), replacement);
+});
+
+
+function seedProfiles(accountCollections, guestCollections) {
+    const seed = {};
+    for (const name of COLLECTION_NAMES) {
+        seed["chronicle." + name] = JSON.stringify(accountCollections[name] || []);
+        seed["chronicle.guest." + name] = JSON.stringify(guestCollections[name] || []);
+    }
+    return freshStorage(seed);
+}
+
+test("explicit migration merges distinct guest records into account and retains guest source", () => {
+    const account = emptyCollections(), guest = emptyCollections();
+    account.entries = [{ id: "account-1", title: "Account record" }];
+    guest.entries = [{ id: "guest-1", title: "Guest record" }];
+    const storage = seedProfiles(account, guest);
+    setStorageProfile("account");
+    const result = migrateGuestDataToAccount();
+    const merged = JSON.parse(storage.getItem("chronicle.entries"));
+    assert.deepEqual(merged.map(record => record.id), ["account-1", "guest-1"]);
+    assert.deepEqual(JSON.parse(storage.getItem("chronicle.guest.entries")), guest.entries);
+    assert.equal(result.rows.entries.guestToImport, 1);
+    assert.ok(storage.getItem(result.backupKey), "pre-migration account safety backup should exist");
+});
+
+test("migration deduplicates identical records and preserves same-ID conflicts", () => {
+    const account = emptyCollections(), guest = emptyCollections();
+    account.entries = [{ id: "same-id", title: "Account version" }, { id: "duplicate", title: "Same content" }];
+    guest.entries = [{ id: "same-id", title: "Guest version" }, { id: "duplicate", title: "Same content" }];
+    const storage = seedProfiles(account, guest);
+    setStorageProfile("account");
+    const preview = previewGuestMigration();
+    assert.equal(preview.rows.entries.guestConflicts, 1);
+    assert.equal(preview.rows.entries.guestDuplicates, 1);
+    migrateGuestDataToAccount();
+    const merged = JSON.parse(storage.getItem("chronicle.entries"));
+    assert.equal(merged.length, 3);
+    assert.equal(merged.filter(record => record.id === "same-id").length, 1);
+    assert.equal(merged.filter(record => record.title === "Guest version").length, 1);
+    assert.equal(merged.filter(record => record.title === "Guest version")[0].migrationSourceProfile, "guest");
+    assert.deepEqual(JSON.parse(storage.getItem("chronicle.guest.entries")), guest.entries);
+});
+
+test("repeating guest migration does not add duplicate imported records", () => {
+    const account = emptyCollections(), guest = emptyCollections();
+    account.entries = [{ id: "account-1", title: "Account record" }];
+    guest.entries = [{ id: "guest-1", title: "Guest record" }];
+    const storage = seedProfiles(account, guest);
+    setStorageProfile("account");
+    migrateGuestDataToAccount();
+    const first = JSON.parse(storage.getItem("chronicle.entries"));
+    migrateGuestDataToAccount();
+    const second = JSON.parse(storage.getItem("chronicle.entries"));
+    assert.equal(second.length, first.length);
+    assert.deepEqual(second, first);
+    assert.deepEqual(JSON.parse(storage.getItem("chronicle.guest.entries")), guest.entries);
+});
+
+test("migration is blocked in guest profile without changing either profile", () => {
+    const account = emptyCollections(), guest = emptyCollections();
+    account.entries = [{ id: "account-1", title: "Account record" }];
+    guest.entries = [{ id: "guest-1", title: "Guest record" }];
+    const storage = seedProfiles(account, guest);
+    setStorageProfile("guest");
+    assert.throws(() => migrateGuestDataToAccount(), /switch to your google account profile/i);
+    assert.deepEqual(JSON.parse(storage.getItem("chronicle.entries")), account.entries);
+    assert.deepEqual(JSON.parse(storage.getItem("chronicle.guest.entries")), guest.entries);
+});
+
+test("migration stops if its safety backup cannot be saved and leaves source data intact", () => {
+    const account = emptyCollections(), guest = emptyCollections();
+    account.entries = [{ id: "account-1", title: "Account record" }];
+    guest.entries = [{ id: "guest-1", title: "Guest record" }];
+    const storage = seedProfiles(account, guest);
+    setStorageProfile("account");
+    storage.failOnceForKey = [...storage.values.keys()].find(key => key.startsWith("chronicle.migrationBackup."));
+    // No backup key exists yet; target the deterministic next storage write by using a proxy-style failure.
+    storage.setItem = function(key, value) {
+        key = String(key);
+        if (key.startsWith("chronicle.migrationBackup.")) throw new Error("simulated backup write failure");
+        this.values.set(key, String(value));
+    };
+    assert.throws(() => migrateGuestDataToAccount(), /safety backup/i);
+    assert.deepEqual(JSON.parse(storage.getItem("chronicle.entries")), account.entries);
+    assert.deepEqual(JSON.parse(storage.getItem("chronicle.guest.entries")), guest.entries);
 });
