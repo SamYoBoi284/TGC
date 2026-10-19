@@ -42,7 +42,6 @@ jobs:
           cp -R css js assets android/app/src/main/assets/www/
 
       - name: Prepare stable Android signing key
-        if: ${{ secrets.TGC_ANDROID_KEYSTORE_BASE64 != '' }}
         env:
           TGC_ANDROID_KEYSTORE_BASE64: ${{ secrets.TGC_ANDROID_KEYSTORE_BASE64 }}
           TGC_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.TGC_ANDROID_KEYSTORE_PASSWORD }}
@@ -50,6 +49,10 @@ jobs:
           TGC_ANDROID_KEY_PASSWORD: ${{ secrets.TGC_ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
+          if [ -z "$TGC_ANDROID_KEYSTORE_BASE64" ]; then
+            echo "Stable keystore secret not configured; Gradle will use its default debug key."
+            exit 0
+          fi
           test -n "$TGC_ANDROID_KEYSTORE_PASSWORD" || { echo "Missing TGC_ANDROID_KEYSTORE_PASSWORD secret"; exit 1; }
           test -n "$TGC_ANDROID_KEY_ALIAS" || { echo "Missing TGC_ANDROID_KEY_ALIAS secret"; exit 1; }
           test -n "$TGC_ANDROID_KEY_PASSWORD" || { echo "Missing TGC_ANDROID_KEY_PASSWORD secret"; exit 1; }
