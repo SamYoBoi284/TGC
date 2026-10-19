@@ -91,10 +91,15 @@ public final class MainActivity extends Activity {
             }
         });
 
-        if (savedInstanceState == null) {
+        boolean restoredWebViewState = false;
+        if (savedInstanceState != null) {
+            // WebView.restoreState() can return null when its saved history
+            // is unusable. Never leave the Activity displaying a blank screen
+            // in that case; fall back to the bundled app entry point.
+            restoredWebViewState = webView.restoreState(savedInstanceState) != null;
+        }
+        if (!restoredWebViewState) {
             webView.loadUrl(APP_ORIGIN + "/assets/www/index.html");
-        } else {
-            webView.restoreState(savedInstanceState);
         }
     }
 
