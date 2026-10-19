@@ -1,0 +1,64 @@
+plugins {
+    id 'com.android.application'
+}
+
+def googleWebClientId = (project.findProperty('googleWebClientId')
+        ?: System.getenv('TGC_GOOGLE_WEB_CLIENT_ID')
+        ?: '').toString().trim()
+
+def signingStorePath = (System.getenv('TGC_ANDROID_KEYSTORE_PATH') ?: '').trim()
+def signingStorePassword = System.getenv('TGC_ANDROID_KEYSTORE_PASSWORD') ?: ''
+def signingKeyAlias = System.getenv('TGC_ANDROID_KEY_ALIAS') ?: ''
+def signingKeyPassword = System.getenv('TGC_ANDROID_KEY_PASSWORD') ?: ''
+def hasCiSigning = signingStorePath && signingStorePassword && signingKeyAlias && signingKeyPassword
+
+android {
+    namespace 'com.sam.tgc'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.sam.tgc'
+        minSdk 26
+        targetSdk 35
+        versionCode (System.getenv('VERSION_CODE')?.toInteger() ?: 1)
+        versionName (System.getenv('VERSION_NAME') ?: '0.1.0')
+        buildConfigField 'String', 'GOOGLE_WEB_CLIENT_ID', "\"${googleWebClientId}\""
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    if (hasCiSigning) {
+        signingConfigs {
+            ci {
+                storeFile file(signingStorePath)
+                storePassword signingStorePassword
+                keyAlias signingKeyAlias
+                keyPassword signingKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            if (hasCiSigning) {
+                signingConfig signingConfigs.ci
+            }
+        }
+        release {
+            if (hasCiSigning) {
+                signingConfig signingConfigs.ci
+            }
+            minifyEnabled false
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core:1.15.0'
+    implementation 'androidx.webkit:webkit:1.12.1'
+    implementation 'androidx.credentials:credentials:1.5.0'
+    implementation 'androidx.credentials:credentials-play-services-auth:1.5.0'
+    implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
+}

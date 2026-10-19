@@ -28,6 +28,8 @@ import { initSearch } from "./search.js";
 import { initOnThisDay } from "./onthisday.js";
 import { initArchive } from "./archive.js";
 import { initSettings } from "./settings.js";
+import { initMigrationUI } from "./migration.js";
+import { initBackupRestoreSafety } from "./backup-restore.js";
 import { initAmbientEffects } from "./ambient-effects.js";
 
 let booted = false;
@@ -38,6 +40,23 @@ let booted = false;
 export function bootApp() {
     if (booted) return;
     booted = true;
+
+    // Storage warnings surface in the shell instead of silently leaving a
+    // save operation stuck or making damaged data look like an empty archive.
+    window.addEventListener("chronicle:storage-error", event => {
+        const status = document.getElementById("footerStatusText");
+        if (status) {
+            status.textContent = event.detail?.message || "Local data needs attention.";
+            status.dataset.tone = "error";
+        }
+    });
+    window.addEventListener("chronicle:storage-recovered", event => {
+        const status = document.getElementById("footerStatusText");
+        if (status) {
+            status.textContent = event.detail?.message || "Local data recovered.";
+            status.dataset.tone = "success";
+        }
+    });
 
     initSidebar();
     initDock();
@@ -51,6 +70,8 @@ export function bootApp() {
     initOnThisDay();
     initArchive();
     initSettings();
+    initMigrationUI();
+    initBackupRestoreSafety();
     initAmbientEffects();
 }
 
@@ -66,9 +87,9 @@ export function bootApp() {
 // independent, per the "don't interfere with Electron" requirement.
 //
 // This runs regardless of auth state (it just caches static files
-// for instant/offline loads — the login screen itself is part of
-// the shell it caches) so it's exported separately from bootApp()
-// and called unconditionally by authgate.js.
+// for instant loads — the login screen itself is part of the shell
+// it caches) so it's exported separately from bootApp() and called
+// unconditionally by authgate.js.
 export function registerServiceWorker() {
     if ("serviceWorker" in navigator && !window.chronicle) {
         window.addEventListener("load", () => {

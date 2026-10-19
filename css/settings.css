@@ -186,3 +186,10 @@
     font-size: 12px;
     color: var(--color-text-disabled);
 }
+
+
+.settingsStorageSummary { margin:var(--space-sm) 0; color:var(--color-text-soft-white); font-size:var(--font-size-sm); font-weight:600; }
+.settingsStorageBreakdown { display:flex; flex-direction:column; gap:2px; margin:var(--space-sm) 0 var(--space-md); }
+.settingsStorageBreakdownRow { display:flex; justify-content:space-between; align-items:center; gap:var(--space-md); padding:7px 0; border-bottom:1px solid var(--color-border-subtle); font-size:12px; color:var(--color-text-secondary); }
+.settingsStorageBreakdownRow strong { color:var(--color-text-soft-white); font-weight:600; white-space:nowrap; }
+@media (max-width:480px) { #settingsPage .settingsRow { align-items:flex-start; flex-wrap:wrap; } #settingsPage .settingsRowControl { max-width:100%; flex-wrap:wrap; } }

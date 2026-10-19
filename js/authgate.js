@@ -32,16 +32,20 @@
 
 import { restoreAuthSession, onAuthChange, signInWithGoogle, getLastRedirectError } from "./firebase.js";
 import { bootApp, registerServiceWorker } from "./app.js";
+import { setStorageProfile } from "./store.js";
 
 const authScreen = document.getElementById("authGateScreen");
 const appShell = document.getElementById("appShell");
 const signInBtn = document.getElementById("authGateSignInBtn");
+const guestBtn = document.getElementById("authGateGuestBtn");
+const ACCESS_MODE_KEY = "chronicle.accessMode";
+const getAccessMode = () => localStorage.getItem(ACCESS_MODE_KEY) === "guest" ? "guest" : "account";
 const statusEl = document.getElementById("authGateStatusText");
 const spinnerEl = document.getElementById("authGateSpinner");
 
 let appBooted = false;
+let appMode = null;
 let signingIn = false;
-let restoreSettled = false;
 
 function setStatus(text, tone = "normal") {
     if (!statusEl) return;
@@ -52,28 +56,31 @@ function setStatus(text, tone = "normal") {
 function showCheckingState() {
     if (spinnerEl) spinnerEl.hidden = false;
     if (signInBtn) signInBtn.hidden = true;
+    if (guestBtn) guestBtn.hidden = true;
     setStatus("Checking your session…");
 }
 
 function showLoginState() {
+    if (getAccessMode() === "guest") { showApp("guest"); return; }
     if (spinnerEl) spinnerEl.hidden = true;
     if (signInBtn) {
         signInBtn.hidden = false;
         signInBtn.disabled = false;
     }
+    if (guestBtn) { guestBtn.hidden = false; guestBtn.disabled = false; }
     setStatus("");
     authScreen?.removeAttribute("hidden");
     appShell?.setAttribute("hidden", "");
 }
 
-function showApp() {
+function showApp(mode = "account") {
+    if (appBooted) { if (appMode !== mode) window.location.reload(); return; }
+    appMode = mode;
+    setStorageProfile(mode);
     authScreen?.setAttribute("hidden", "");
     appShell?.removeAttribute("hidden");
-
-    if (!appBooted) {
-        appBooted = true;
-        bootApp();
-    }
+    appBooted = true;
+    bootApp();
 }
 
 // PWA shell caching is independent of auth state — it just makes
@@ -85,6 +92,7 @@ showCheckingState();
 signInBtn?.addEventListener("click", async () => {
     if (signingIn) return;
     signingIn = true;
+    localStorage.setItem(ACCESS_MODE_KEY, "account");
     signInBtn.disabled = true;
     setStatus("Opening Google sign-in…");
 
@@ -113,33 +121,31 @@ signInBtn?.addEventListener("click", async () => {
 // the single source of truth the whole app defers to: as long as
 // this callback sees `null`, the login screen stays up no matter
 // what else is going on in the page.
-onAuthChange((user) => {
-    if (user) {
-        showApp();
-    } else if (appBooted) {
-        // A session that existed a moment ago just ended (e.g. the
-        // user clicked "Sign out" in Settings). Re-lock rather than
-        // leaving the already-booted app on screen.
-        window.location.reload();
-    } else {
-        showLoginState();
-    }
+guestBtn?.addEventListener("click", () => {
+    localStorage.setItem(ACCESS_MODE_KEY, "guest");
+    showApp("guest");
 });
 
-// Kicks off the actual restore-session check. onAuthChange above is
-// already listening, so whichever of "already signed in" / "not
-// signed in" turns out to be true gets handled the moment Firebase
-// knows the answer.
-restoreAuthSession()
-    .then(() => {
-        const redirectError = getLastRedirectError();
-        if (redirectError && !appBooted) {
-            showLoginState();
-            setStatus(redirectError, "error");
-        }
-    })
-    .catch((err) => {
-        console.warn("Auth restore failed:", err);
-        showLoginState();
-        setStatus("Couldn't reach the sign-in service. Check your connection and try again.", "error");
+// Guest mode stays local-only and opens immediately without loading Firebase,
+// so the chronicle remains available when offline.
+if (getAccessMode() === "guest") {
+    showApp("guest");
+} else {
+    showCheckingState();
+    onAuthChange((user) => {
+        if (getAccessMode() === "guest") return;
+        if (user) showApp("account");
+        else if (appBooted && appMode !== "guest") window.location.reload();
+        else showLoginState();
     });
+    restoreAuthSession()
+        .then(() => {
+            const redirectError = getLastRedirectError();
+            if (redirectError && !appBooted) { showLoginState(); setStatus(redirectError, "error"); }
+        })
+        .catch((err) => {
+            console.warn("Auth restore failed:", err);
+            showLoginState();
+            setStatus("Couldn't reach the sign-in service. Check your connection and try again.", "error");
+        });
+}
