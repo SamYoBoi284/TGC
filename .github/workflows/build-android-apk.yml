@@ -10,6 +10,7 @@ on:
       - "feat/phase7-voice-input"
       - "feat/phase8-apk-build-pipeline"
       - "feat/phase9-data-safety-tests"
+      - "feat/phase10-android-visual-polish"
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
