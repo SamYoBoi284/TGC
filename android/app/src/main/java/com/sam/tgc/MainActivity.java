@@ -23,6 +23,7 @@ import androidx.credentials.CustomCredential;
 import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
+import androidx.credentials.exceptions.NoCredentialException;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import androidx.webkit.WebViewAssetLoader;
 
@@ -125,7 +126,26 @@ public final class MainActivity extends Activity {
         GetCredentialRequest request = new GetCredentialRequest.Builder()
             .addCredentialOption(googleIdOption)
             .build();
+        requestGoogleCredential(request, true);
+    }
 
+    private void beginExplicitGoogleSignIn() {
+        // Credential Manager can return NoCredentialException for the
+        // account-discovery request on some devices. Retry with Google's
+        // explicit button sign-in option so the user gets a sign-in chooser.
+        com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption signInOption =
+            new com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption.Builder()
+                .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+                .build();
+        GetCredentialRequest request = new GetCredentialRequest.Builder()
+            .addCredentialOption(signInOption)
+            .build();
+        requestGoogleCredential(request, false);
+    }
+
+    private void requestGoogleCredential(
+            GetCredentialRequest request,
+            boolean allowExplicitSignInFallback) {
         signInCancellation = new CancellationSignal();
         credentialManager.getCredentialAsync(
             this,
@@ -149,8 +169,16 @@ public final class MainActivity extends Activity {
 
                 @Override
                 public void onError(@NonNull GetCredentialException e) {
-                    deliverAuthResult(null, e.getMessage() != null
-                        ? e.getMessage() : "Google sign-in was cancelled or failed.");
+                    if (allowExplicitSignInFallback && e instanceof NoCredentialException) {
+                        runOnUiThread(() -> beginExplicitGoogleSignIn());
+                        return;
+                    }
+                    String message = e.getMessage();
+                    if (e instanceof NoCredentialException) {
+                        message = "No Google sign-in credential is available. Make sure a Google account is added to this Android device and Google Play services is up to date, then try again.";
+                    }
+                    deliverAuthResult(null, message != null
+                        ? message : "Google sign-in was cancelled or failed.");
                 }
             }
         );
