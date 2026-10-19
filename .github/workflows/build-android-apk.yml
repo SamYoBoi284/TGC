@@ -6,6 +6,7 @@ on:
       - main
       - "feat/native-android-apk-github-actions"
       - "feat/phase6-guest-account-migration"
+      - "feat/phase7-backup-restore-safety"
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
