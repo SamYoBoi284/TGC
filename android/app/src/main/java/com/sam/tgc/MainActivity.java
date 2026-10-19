@@ -57,8 +57,10 @@ public final class MainActivity extends Activity {
             Insets bars = windowInsets.getInsets(
                 WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()
             );
-            view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
-            return windowInsets;
+            Insets ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
+            // Apply insets once at the native WebView boundary. Include the keyboard when taller than the navigation bar.
+            view.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, ime.bottom));
+            return WindowInsetsCompat.CONSUMED;
         });
         ViewCompat.requestApplyInsets(webView);
 
