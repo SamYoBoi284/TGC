@@ -134,8 +134,8 @@ public final class MainActivity extends Activity {
         // account-discovery request on some devices. Retry with Google's
         // explicit button sign-in option so the user gets a sign-in chooser.
         com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption signInOption =
-            new com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption.Builder()
-                .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+            new com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption.Builder(
+                BuildConfig.GOOGLE_WEB_CLIENT_ID)
                 .build();
         GetCredentialRequest request = new GetCredentialRequest.Builder()
             .addCredentialOption(signInOption)
