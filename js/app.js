@@ -39,6 +39,23 @@ export function bootApp() {
     if (booted) return;
     booted = true;
 
+    // Storage warnings surface in the shell instead of silently leaving a
+    // save operation stuck or making damaged data look like an empty archive.
+    window.addEventListener("chronicle:storage-error", event => {
+        const status = document.getElementById("footerStatusText");
+        if (status) {
+            status.textContent = event.detail?.message || "Local data needs attention.";
+            status.dataset.tone = "error";
+        }
+    });
+    window.addEventListener("chronicle:storage-recovered", event => {
+        const status = document.getElementById("footerStatusText");
+        if (status) {
+            status.textContent = event.detail?.message || "Local data recovered.";
+            status.dataset.tone = "success";
+        }
+    });
+
     initSidebar();
     initDock();
     initHome();

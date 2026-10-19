@@ -73,6 +73,13 @@ jobs:
         with:
           gradle-version: "8.10"
 
+      - name: Validate JavaScript module syntax
+        run: |
+          set -euo pipefail
+          for file in js/*.js; do
+            node --input-type=module --check < "$file"
+          done
+
       - name: Build signed release APK
         env:
           TGC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.TGC_GOOGLE_WEB_CLIENT_ID }}

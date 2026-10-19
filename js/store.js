@@ -69,7 +69,9 @@ function readForWrite(name) {
         try { localStorage.setItem(storageKey, recoveryRaw); } catch { /* use recovered records in memory */ }
         return recovery;
     }
-    throw new Error("The " + name + " collection is unreadable. No changes were saved and the original data was not overwritten. Import a valid backup to recover it.");
+    const message = "The " + name + " collection is unreadable. No changes were saved and the original data was not overwritten. Import a valid backup to recover it.";
+    emit("chronicle:storage-error", { collection: name, message });
+    throw new Error(message);
 }
 function notify(name) {
     emit("chronicle:change", { collection: name });
@@ -82,8 +84,14 @@ function writeCollection(name, records) {
     if (oldRaw !== null && oldRecords === null && parseRecords(localStorage.getItem(recoveryKey(name))) === null) {
         throw new Error("The " + name + " collection is unreadable. Original data was preserved and this change was not saved.");
     }
-    if (oldRecords !== null) preserveRecovery(name, oldRaw);
-    localStorage.setItem(storageKey, JSON.stringify(records));
+    try {
+        if (oldRecords !== null) preserveRecovery(name, oldRaw);
+        localStorage.setItem(storageKey, JSON.stringify(records));
+    } catch (error) {
+        const message = error?.message || "Could not save to local storage. Check available device storage.";
+        emit("chronicle:storage-error", { collection: name, message });
+        throw error;
+    }
     notify(name);
 }
 export function replaceCollections(collections) {
