@@ -41,6 +41,26 @@ jobs:
           cp index.html manifest.json service-worker.js android/app/src/main/assets/www/
           cp -R css js assets android/app/src/main/assets/www/
 
+      - name: Prepare stable Android signing key
+        if: ${{ secrets.TGC_ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          TGC_ANDROID_KEYSTORE_BASE64: ${{ secrets.TGC_ANDROID_KEYSTORE_BASE64 }}
+          TGC_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.TGC_ANDROID_KEYSTORE_PASSWORD }}
+          TGC_ANDROID_KEY_ALIAS: ${{ secrets.TGC_ANDROID_KEY_ALIAS }}
+          TGC_ANDROID_KEY_PASSWORD: ${{ secrets.TGC_ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$TGC_ANDROID_KEYSTORE_PASSWORD" || { echo "Missing TGC_ANDROID_KEYSTORE_PASSWORD secret"; exit 1; }
+          test -n "$TGC_ANDROID_KEY_ALIAS" || { echo "Missing TGC_ANDROID_KEY_ALIAS secret"; exit 1; }
+          test -n "$TGC_ANDROID_KEY_PASSWORD" || { echo "Missing TGC_ANDROID_KEY_PASSWORD secret"; exit 1; }
+          KEYSTORE_PATH="$RUNNER_TEMP/tgc-release.jks"
+          printf '%s' "$TGC_ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          test -s "$KEYSTORE_PATH"
+          echo "TGC_ANDROID_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
+          echo "TGC_ANDROID_KEYSTORE_PASSWORD=$TGC_ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "TGC_ANDROID_KEY_ALIAS=$TGC_ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "TGC_ANDROID_KEY_PASSWORD=$TGC_ANDROID_KEY_PASSWORD" >> "$GITHUB_ENV"
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -51,8 +71,12 @@ jobs:
           TGC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.TGC_GOOGLE_WEB_CLIENT_ID }}
         run: gradle --no-daemon -p android assembleDebug
 
-      - name: Verify APK exists
-        run: test -s android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Verify APK and print signing certificate fingerprints
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK"
 
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
