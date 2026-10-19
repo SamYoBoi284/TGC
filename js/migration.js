@@ -187,3 +187,155 @@ export function getLatestMigrationBackupInfo() {
         return backup ? { key, createdAt: backup.createdAt, counts: Object.fromEntries(COLLECTION_NAMES.map(name => [name, backup.collections?.[name]?.length || 0])) } : null;
     } catch { return null; }
 }
+
+
+async function loadCloudCollections() {
+    if (!navigator.onLine) throw new Error("Connect to the internet before migrating. TGC needs to check the account's cloud mirror first so migration cannot overwrite cloud-only records.");
+    const { getCurrentUser, connectFirebase, readDoc } = await import("./firebase.js");
+    const user = getCurrentUser();
+    if (!user) throw new Error("Sign in to your Google account before migrating guest data.");
+    const config = (() => {
+        try { return JSON.parse(localStorage.getItem("chronicle.settings") || "{}")?.sync?.firebaseConfig || undefined; }
+        catch { return undefined; }
+    })();
+    const connected = await connectFirebase(config);
+    if (!connected.ok) throw new Error("Could not inspect your cloud data, so migration was stopped safely: " + connected.error);
+    const result = {};
+    for (const name of COLLECTION_NAMES) {
+        const doc = await readDoc("users/" + user.uid + "/chronicleBackups", name);
+        if (doc == null) result[name] = [];
+        else if (Array.isArray(doc.records)) result[name] = doc.records;
+        else throw new Error("The cloud " + LABELS[name] + " backup is invalid. No migration was performed.");
+    }
+    return result;
+}
+
+function addMigrationSection() {
+    const sections = document.getElementById("settingsSections");
+    if (!sections || document.getElementById("settingsMigrationSection")) return;
+    const section = document.createElement("section");
+    section.className = "settingsSection";
+    section.id = "settingsMigrationSection";
+    section.innerHTML = `
+        <h2 class="settingsSectionTitle">Guest data migration</h2>
+        <p class="settingsRowHint">Safely merge guest records into your Google account profile. Existing account and cloud records are preserved; conflicting IDs are kept as separate records. Guest data is never deleted.</p>
+        <div class="settingsRow">
+            <div class="settingsRowLabel">
+                <span class="settingsRowTitle">Preview migration</span>
+                <span class="settingsRowHint">Compare account, cloud, and guest records before changing anything.</span>
+            </div>
+            <div class="settingsRowControl"><button type="button" class="settingsBtn settingsBtnGhost" id="settingsMigrationPreviewBtn">Preview</button></div>
+        </div>
+        <div id="settingsMigrationPreview" class="settingsStorageBreakdown" aria-live="polite"></div>
+        <div class="settingsRow">
+            <div class="settingsRowLabel">
+                <span class="settingsRowTitle">Merge guest data</span>
+                <span class="settingsRowHint">Creates a local safety backup first, then merges records without deleting the guest source.</span>
+            </div>
+            <div class="settingsRowControl"><button type="button" class="settingsBtn" id="settingsMigrationRunBtn">Migrate guest data</button></div>
+        </div>
+        <div class="settingsRow">
+            <div class="settingsRowLabel">
+                <span class="settingsRowTitle">Download safety backup</span>
+                <span class="settingsRowHint" id="settingsMigrationBackupHint">Downloads the most recent pre-migration account backup, if one exists.</span>
+            </div>
+            <div class="settingsRowControl"><button type="button" class="settingsBtn settingsBtnGhost" id="settingsMigrationDownloadBackupBtn">Download backup</button></div>
+        </div>
+        <p id="settingsMigrationStatus" class="settingsStatusText" aria-live="polite"></p>
+    `;
+    sections.appendChild(section);
+
+    const previewEl = section.querySelector("#settingsMigrationPreview");
+    const statusEl = section.querySelector("#settingsMigrationStatus");
+    const runBtn = section.querySelector("#settingsMigrationRunBtn");
+    const previewBtn = section.querySelector("#settingsMigrationPreviewBtn");
+    const downloadBtn = section.querySelector("#settingsMigrationDownloadBackupBtn");
+    const status = message => { if (statusEl) statusEl.textContent = message; };
+    const isAccount = () => getStorageProfile() === "account";
+
+    function renderPreview(preview) {
+        if (!previewEl) return;
+        previewEl.innerHTML = COLLECTION_NAMES.map(name => {
+            const row = preview.rows[name];
+            return `<div class="settingsStorageBreakdownRow"><span>${LABELS[name]} · account ${row.account}, cloud ${row.cloud}, guest ${row.guest}</span><strong>+${row.guestToImport} guest · ${row.guestDuplicates} duplicates · ${row.guestConflicts} ID conflicts</strong></div>`;
+        }).join("");
+        const guestTotal = Object.values(preview.rows).reduce((sum, row) => sum + row.guest, 0);
+        const addTotal = Object.values(preview.rows).reduce((sum, row) => sum + row.guestToImport, 0);
+        const conflictTotal = Object.values(preview.rows).reduce((sum, row) => sum + row.guestConflicts + row.cloudConflicts, 0);
+        status(`Preview ready: ${guestTotal} guest records found; ${addTotal} guest records will be added; ${conflictTotal} ID conflicts will be preserved as separate records.`);
+    }
+
+    previewBtn?.addEventListener("click", async () => {
+        previewBtn.disabled = true;
+        status("Reading local profiles…");
+        try {
+            let cloud = null;
+            if (isAccount()) cloud = await loadCloudCollections();
+            renderPreview(previewGuestMigration(cloud));
+            if (!isAccount()) status("Local-only preview shown. Switch to your Google account profile to inspect cloud data and run migration.");
+        } catch (err) {
+            try { renderPreview(previewGuestMigration()); } catch { /* preserve original error */ }
+            status("Cloud-aware preview unavailable: " + (err?.message || "could not inspect data") + (isAccount() ? "" : " · Switch to your Google account to migrate."));
+        } finally { previewBtn.disabled = false; }
+    });
+
+    runBtn?.addEventListener("click", async () => {
+        if (!isAccount()) {
+            status("Switch to your Google account profile first. Your guest records remain untouched.");
+            return;
+        }
+        runBtn.disabled = true;
+        previewBtn.disabled = true;
+        status("Checking local and cloud records…");
+        try {
+            const cloud = await loadCloudCollections();
+            const preview = previewGuestMigration(cloud);
+            renderPreview(preview);
+            const guestTotal = Object.values(preview.rows).reduce((sum, row) => sum + row.guest, 0);
+            const addTotal = Object.values(preview.rows).reduce((sum, row) => sum + row.guestToImport, 0);
+            const conflictTotal = Object.values(preview.rows).reduce((sum, row) => sum + row.guestConflicts + row.cloudConflicts, 0);
+            if (!guestTotal) { status("No guest records found to migrate."); return; }
+            const confirmed = window.confirm(
+                "Migrate " + addTotal + " guest record(s) into this account profile?\n\n" +
+                "Existing local and cloud records will be merged, not replaced. " + conflictTotal +
+                " ID conflict(s) will be kept as separate records. A local safety backup will be saved first. " +
+                "Guest source data will remain untouched. Continue?"
+            );
+            if (!confirmed) { status("Migration cancelled. No data changed."); return; }
+            const result = migrateGuestDataToAccount({ remoteCollections: cloud });
+            const added = Object.values(result.rows).reduce((sum, row) => sum + row.guestToImport, 0);
+            const cloudAdded = Object.values(result.rows).reduce((sum, row) => sum + row.cloudToMerge, 0);
+            status("Migration complete: " + added + " guest record(s) added; " + cloudAdded + " cloud-only record(s) merged. Guest source retained. Safety backup saved. Reloading…");
+            updateBackupHint();
+            window.setTimeout(() => window.location.reload(), 900);
+        } catch (err) {
+            status("Migration stopped safely: " + (err?.message || "unknown error") + " Guest source data was not deleted.");
+        } finally {
+            runBtn.disabled = false;
+            previewBtn.disabled = false;
+        }
+    });
+
+    downloadBtn?.addEventListener("click", () => {
+        try { downloadLatestMigrationBackup(); status("Migration safety backup downloaded."); }
+        catch (err) { status(err?.message || "No backup is available."); }
+    });
+
+    function updateBackupHint() {
+        const hint = section.querySelector("#settingsMigrationBackupHint");
+        const info = getLatestMigrationBackupInfo();
+        if (hint) hint.textContent = info
+            ? "Latest local safety backup: " + new Date(info.createdAt).toLocaleString() + ". Download it before clearing app data."
+            : "Downloads the most recent pre-migration account backup, if one exists.";
+        if (downloadBtn) downloadBtn.disabled = !info;
+    }
+    updateBackupHint();
+    if (!isAccount()) {
+        runBtn.disabled = true;
+        status("Guest profile is active. Preview is available; switch to your Google account profile to run migration.");
+    }
+}
+
+export function initMigrationUI() {
+    addMigrationSection();
+}
