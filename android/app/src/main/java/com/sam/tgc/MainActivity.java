@@ -358,8 +358,10 @@ public final class MainActivity extends Activity {
 
     private void openReleasePage(String tag) {
         try {
-            startActivity(new Intent(Intent.ACTION_VIEW,
-                Uri.parse("https://github.com/SamYoBoi284/TGC/releases/tag/" + Uri.encode(tag))));
+            String url = "latest".equals(tag)
+                ? "https://github.com/SamYoBoi284/TGC/releases/latest"
+                : "https://github.com/SamYoBoi284/TGC/releases/tag/" + Uri.encode(tag);
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
         } catch (RuntimeException ignored) {
             Toast.makeText(this, "Could not open the release page.", Toast.LENGTH_SHORT).show();
         }
