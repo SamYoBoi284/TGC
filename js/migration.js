@@ -132,7 +132,7 @@ export function migrateGuestDataToAccount({ remoteCollections = null } = {}) {
     }
 
     const timestamp = new Date().toISOString();
-    const backupKey = BACKUP_PREFIX + timestamp.replace(/[^0-9]/g, "").slice(0, 14);
+    const backupKey = BACKUP_PREFIX + timestamp.replace(/[^0-9]/g, "").slice(0, 14) + "-" + newId().slice(0, 8);
     const backup = {
         format: "the-glitchcore-chronicle-migration-safety-backup",
         schemaVersion: 1,
