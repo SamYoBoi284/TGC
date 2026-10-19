@@ -179,8 +179,7 @@ test("migration stops if its safety backup cannot be saved and leaves source dat
     guest.entries = [{ id: "guest-1", title: "Guest record" }];
     const storage = seedProfiles(account, guest);
     setStorageProfile("account");
-    storage.failOnceForKey = [...storage.values.keys()].find(key => key.startsWith("chronicle.migrationBackup."));
-    // No backup key exists yet; target the deterministic next storage write by using a proxy-style failure.
+    // Simulate a storage quota/write failure specifically for the safety backup.
     storage.setItem = function(key, value) {
         key = String(key);
         if (key.startsWith("chronicle.migrationBackup.")) throw new Error("simulated backup write failure");
