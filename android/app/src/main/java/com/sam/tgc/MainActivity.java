@@ -103,7 +103,7 @@ public final class MainActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                if (url != null && url.startsWith(APP_ORIGIN + "/")) installVoiceInputUi();
+                if (url != null && url.startsWith(APP_ORIGIN + "/")) {\n                    installAndroidExperienceUi();\n                    installVoiceInputUi();\n                }
             }
         });
 
@@ -117,6 +117,36 @@ public final class MainActivity extends Activity {
         if (!restoredWebViewState) {
             webView.loadUrl(APP_ORIGIN + "/assets/www/index.html");
         }
+    }
+
+    /**
+     * Android-only visual polish. Kept in the native wrapper so the separate
+     * web/Electron app and its shared assets remain untouched.
+     */
+    private void installAndroidExperienceUi() {
+        if (webView == null || isFinishing()) return;
+        String script = "(function() {" +
+            "if (window.__tgcAndroidExperienceUiInstalled) return;" +
+            "window.__tgcAndroidExperienceUiInstalled = true;" +
+            "var style = document.createElement('style'); style.id = 'tgcAndroidExperienceStyles';" +
+            "style.textContent = " +
+                "' :root { --tgc-motion-fast: 140ms; --tgc-motion-normal: 240ms; }' +" +
+                "' button, .sidebarNavItem, .dockItem { -webkit-tap-highlight-color: transparent; }' +" +
+                "' button { transition: transform var(--tgc-motion-fast) cubic-bezier(.2,.75,.25,1), filter var(--tgc-motion-fast) ease, border-color var(--tgc-motion-normal) ease, background-color var(--tgc-motion-normal) ease, box-shadow var(--tgc-motion-normal) ease; }' +" +
+                "' button:active, .sidebarNavItem:active, .dockItem:active { transform: scale(.975); filter: brightness(1.12); }' +" +
+                "' button:focus-visible, .sidebarNavItem:focus-visible, .dockItem:focus-visible { outline: 2px solid var(--color-violet-electric, #8b5cf6); outline-offset: 2px; }' +" +
+                "' .sidebarNavItem { transition: transform var(--tgc-motion-fast) ease, background-color var(--tgc-motion-normal) ease, color var(--tgc-motion-normal) ease, box-shadow var(--tgc-motion-normal) ease; }' +" +
+                "' .sidebarNavItem.sidebarNavItemActive { box-shadow: inset 0 0 0 1px var(--color-border-strong, rgba(139,92,246,.32)), 0 3px 14px rgba(89,52,135,.10); }' +" +
+                "' .dockItem { transition: transform var(--tgc-motion-fast) cubic-bezier(.2,.75,.25,1), background-color var(--tgc-motion-normal) ease, box-shadow var(--tgc-motion-normal) ease; }' +" +
+                "' .dockItem:active { box-shadow: 0 0 0 2px var(--color-border-strong, rgba(139,92,246,.32)); }' +" +
+                "' #appBrandGlyph { display: inline-block; transform-origin: center; animation: tgcAndroidGlyphBreath 4.8s ease-in-out infinite; }' +" +
+                "' @keyframes tgcAndroidGlyphBreath { 0%,100% { opacity: .82; text-shadow: 0 0 0 rgba(139,92,246,0); } 50% { opacity: 1; text-shadow: 0 0 12px rgba(139,92,246,.42); } }' +" +
+                "' .authGateCard { animation: tgcAndroidEnter 360ms cubic-bezier(.2,.75,.25,1) both; }' +" +
+                "' @keyframes tgcAndroidEnter { from { opacity: 0; transform: translateY(8px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }' +" +
+                "' @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } }';" +
+            "document.head.appendChild(style);" +
+        "})();";
+        webView.evaluateJavascript(script, null);
     }
 
     private void installVoiceInputUi() {
