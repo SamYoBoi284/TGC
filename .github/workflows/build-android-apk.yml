@@ -41,6 +41,13 @@ jobs:
           cp index.html manifest.json service-worker.js android/app/src/main/assets/www/
           cp -R css js assets android/app/src/main/assets/www/
 
+      - name: Configure native Android launcher icon
+        run: |
+          test -s assets/icon-512.png
+          mkdir -p android/app/src/main/res/mipmap-nodpi
+          cp assets/icon-512.png android/app/src/main/res/mipmap-nodpi/ic_launcher.png
+          test -s android/app/src/main/res/mipmap-nodpi/ic_launcher.png
+
       - name: Prepare stable Android signing key
         env:
           TGC_ANDROID_KEYSTORE_BASE64: ${{ secrets.TGC_ANDROID_KEYSTORE_BASE64 }}
