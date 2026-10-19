@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - "feat/native-android-apk-github-actions"
+      - "feat/phase10-android-visual-polish"
       - "feat/phase6-guest-account-migration"
       - "feat/phase7-backup-restore-safety"
       - "feat/phase7-voice-input"
@@ -12,7 +13,7 @@ on:
       - "feat/phase9-data-safety-tests"
       - "feat/phase10-android-visual-polish"
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "feat/phase10-android-visual-polish" ]
   workflow_dispatch:
 
 permissions:
