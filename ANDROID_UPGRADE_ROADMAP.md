@@ -38,15 +38,15 @@ Preview migration, preserve the guest source, handle duplicates and ID conflicts
 - Keep artifacts separate from GitHub Releases. Do not publish releases or create tags without explicit approval.
 - Verified on run 39195484461: debug APK and signed release APK both built, release signature verification passed, and both artifacts uploaded. Physical install/update verification remains outstanding.
 
-## Phase 9 — Data Safety and Backup (CURRENT)
+## Phase 9 — Data Safety and Backup (CI VERIFIED)
 - Keep existing local-first storage, profile separation, recovery-copy behavior, and migration/restore safety features intact.
 - Add automated regression tests for profile separation before migration; explicit guest-to-account migration; preserving account and guest records; duplicate detection; same-ID conflict preservation; retry idempotency; refusing migration from the guest profile; and refusing to proceed if the pre-migration safety backup cannot be saved. Also test recovery from malformed primary data, refusing writes over unrecoverable data, refusing incomplete backup snapshots, validating full replacements, rollback after a failed multi-collection write, and successful replacement.
 - Run these tests in GitHub Actions before building APKs so data-safety regressions fail the pipeline early.
 - Keep this phase scoped to tests, CI, and roadmap documentation; do not modify shared runtime JS, UI, or the separate web/Electron behavior without an explicitly agreed reason.
-- Do not claim tests pass until the new CI run confirms it.
+- Verified on workflow run 39197014262: JavaScript syntax validation and the complete data-safety regression test step passed; Android debug and signed release APK build/artifact steps also completed successfully.
 - Keep the distinction explicit: account/guest storage is separate before migration; the user-initiated migration merges eligible guest records into the account while retaining the guest source and a pre-migration account backup.
 
-## Phase 10 — UI Edits and UX Enhancements
+## Phase 10 — UI Edits and UX Enhancements (CURRENT)
 Improve the Android app's interface and usability without a wholesale redesign or breaking working behavior.
 - Improve screen layouts, navigation clarity, control placement, responsive behavior, and interaction feedback.
 - Make interactions and animations feel responsive and coherent, inspired by Sync AI's functional behavior rather than copying its appearance.
@@ -54,6 +54,10 @@ Improve the Android app's interface and usability without a wholesale redesign o
 - Keep the Glitchcore Chronicle's calm, premium, personal visual identity.
 - Audit each proposed UI change against existing workflows and preserve current features unless a change is explicitly required.
 - Keep the separate web/Electron version untouched.
+- Implement Android-only visual polish through runtime-injected styles in `MainActivity.java`, preserving the shared HTML/CSS/JS assets.
+- Add subtle tactile press feedback, smoother control transitions, clearer keyboard focus, a restrained brand-glyph breathing animation, and a short auth-card entrance animation.
+- Respect `prefers-reduced-motion`; keep the existing native system-bar/display-cutout/keyboard inset handling unchanged.
+- Verify JavaScript syntax and Android builds in CI; physical-device visual/accessibility review remains necessary before calling the phase fully user-verified.
 
 ## Working Rules
 - Work on one phase at a time and report results before moving to the next.
