@@ -8,6 +8,7 @@ on:
       - "feat/phase6-guest-account-migration"
       - "feat/phase7-backup-restore-safety"
       - "feat/phase7-voice-input"
+      - "feat/phase8-apk-build-pipeline"
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -51,7 +52,37 @@ jobs:
           cp assets/icon-512.png android/app/src/main/res/mipmap-nodpi/ic_launcher.png
           test -s android/app/src/main/res/mipmap-nodpi/ic_launcher.png
 
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10"
+
+      - name: Validate JavaScript module syntax
+        run: |
+          set -euo pipefail
+          for file in js/*.js; do
+            node --input-type=module --check < "$file"
+          done
+
+      - name: Build debug APK first
+        run: |
+          set -euo pipefail
+          gradle --no-daemon -p android assembleDebug
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          cp "$APK" "$RUNNER_TEMP/The-Glitchcore-Chronicle-debug.apk"
+          test -s "$RUNNER_TEMP/The-Glitchcore-Chronicle-debug.apk"
+
+      - name: Upload debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: The-Glitchcore-Chronicle-Android-debug
+          path: ${{ runner.temp }}/The-Glitchcore-Chronicle-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Prepare stable Android signing key (required for release builds)
+        if: github.event_name != 'pull_request'
         env:
           TGC_ANDROID_KEYSTORE_BASE64: ${{ secrets.TGC_ANDROID_KEYSTORE_BASE64 }}
           TGC_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.TGC_ANDROID_KEYSTORE_PASSWORD }}
@@ -71,19 +102,8 @@ jobs:
           echo "TGC_ANDROID_KEY_ALIAS=$TGC_ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
           echo "TGC_ANDROID_KEY_PASSWORD=$TGC_ANDROID_KEY_PASSWORD" >> "$GITHUB_ENV"
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.10"
-
-      - name: Validate JavaScript module syntax
-        run: |
-          set -euo pipefail
-          for file in js/*.js; do
-            node --input-type=module --check < "$file"
-          done
-
       - name: Build signed release APK
+        if: github.event_name != 'pull_request'
         env:
           TGC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.TGC_GOOGLE_WEB_CLIENT_ID }}
         run: |
@@ -95,6 +115,7 @@ jobs:
           test -s "$RUNNER_TEMP/The-Glitchcore-Chronicle.apk"
 
       - name: Verify signed release APK and print signing certificate fingerprints
+        if: github.event_name != 'pull_request'
         run: |
           APK="$RUNNER_TEMP/The-Glitchcore-Chronicle.apk"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
@@ -102,6 +123,7 @@ jobs:
 
       # Actions artifact only: this workflow never creates a GitHub Release.
       - name: Upload installable release APK
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: The-Glitchcore-Chronicle-Android
