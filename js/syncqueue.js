@@ -1,4 +1,4 @@
-import { replaceCollections } from "./store.js";
+import { replaceCollections, getStorageProfile } from "./store.js";
 // ===========================================
 // The Glitchcore Chronicle
 // js/syncqueue.js
@@ -37,7 +37,7 @@ function saveQueue() {
 // Call this from store.js writes when sync is enabled — enqueues a
 // full push of that collection (simple + safe over per-record diffs).
 export function enqueueSync(collectionName) {
-    if (!EXPORTED_COLLECTIONS.includes(collectionName)) return;
+    if (getStorageProfile() === "guest" || !EXPORTED_COLLECTIONS.includes(collectionName)) return;
 
     queue = queue.filter(item => item.collectionName !== collectionName);
     queue.push({ collectionName, attempts: 0, queuedAt: new Date().toISOString() });
@@ -103,6 +103,7 @@ const SNAPSHOT_COLLECTION = "chronicleSnapshots";
 // single consistent point in time across entries/braindump/
 // milestones/ideas rather than mixing versions.
 export async function backupNow() {
+    if (getStorageProfile() === "guest") return { ok: false, queued: 0, error: "Cloud backup is unavailable in guest mode. Switch to a Google account first." };
     const user = getCurrentUser();
     if (!user) {
         return { ok: false, queued: 0, error: "Sign in with Google first — Firestore rules require an authenticated user." };
@@ -147,6 +148,7 @@ export async function backupNow() {
 // the picker in Settings doesn't have to download every full backup
 // just to show a list of dates.
 export async function listSnapshots() {
+    if (getStorageProfile() === "guest") throw new Error("Cloud backups are unavailable in guest mode. Switch to a Google account first.");
     const user = getCurrentUser();
     if (!user) {
         throw new Error("Sign in with Google first — Firestore rules require an authenticated user.");
@@ -169,6 +171,7 @@ export async function listSnapshots() {
 // snapshot's data. Caller should confirm with the user first —
 // destructive, like Settings' existing import.
 export async function restoreSnapshot(snapshotId) {
+    if (getStorageProfile() === "guest") throw new Error("Cloud restore is unavailable in guest mode. Switch to a Google account first.");
     const user = getCurrentUser();
     if (!user) {
         throw new Error("Sign in with Google first — Firestore rules require an authenticated user.");
