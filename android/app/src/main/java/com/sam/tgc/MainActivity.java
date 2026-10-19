@@ -103,7 +103,10 @@ public final class MainActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                if (url != null && url.startsWith(APP_ORIGIN + "/")) {\n                    installAndroidExperienceUi();\n                    installVoiceInputUi();\n                }
+                if (url != null && url.startsWith(APP_ORIGIN + "/")) {
+                    installAndroidExperienceUi();
+                    installVoiceInputUi();
+                }
             }
         });
 
