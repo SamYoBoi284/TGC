@@ -29,17 +29,21 @@ Preview migration, preserve the guest source, handle duplicates and ID conflicts
 - Keep the implementation native-Android-specific. Do not modify the separate web/Electron experience.
 - Verify that existing editing, autosave, local storage, Google sign-in, guest mode, and dynamic system insets remain intact.
 
-## Phase 8 — GitHub Actions and APK Builds (CURRENT)
+## Phase 8 — GitHub Actions and APK Builds (BUILD + ARTIFACTS VERIFIED; DEVICE INSTALL CHECK PENDING)
 - Build a debug APK first so pull requests can validate Android compilation without access to signing secrets.
 - Upload the debug APK as a downloadable GitHub Actions artifact with a defined retention period.
 - For trusted push/workflow-dispatch runs, build the signed release APK using repository secrets and verify its signature before uploading it as a separate artifact.
 - Never expose signing secrets to pull-request builds; never generate a fallback release signing key when required secrets are missing.
 - Validate JavaScript module syntax and fail clearly when required build inputs or artifacts are missing.
 - Keep artifacts separate from GitHub Releases. Do not publish releases or create tags without explicit approval.
-- Verify successful debug and signed-release workflow runs, artifact availability, and the install/update behavior of the resulting APKs.
+- Verified on run 39195484461: debug APK and signed release APK both built, release signature verification passed, and both artifacts uploaded. Physical install/update verification remains outstanding.
 
-## Phase 9 — Data Safety and Backup
-Preserve existing records across upgrades, validate imports, preview restores, protect against duplicates/conflicts, and keep recovery paths available. This phase also retains the additional guest-migration and backup/restore safety work that was mistakenly numbered as a separate Phase 7; those features are valuable and must not be removed.
+## Phase 9 — Data Safety and Backup (CURRENT)
+- Keep existing local-first storage, profile separation, recovery-copy behavior, and migration/restore safety features intact.
+- Add automated regression tests for account/guest isolation, recovery from malformed primary data, refusing writes over unrecoverable data, refusing incomplete backup snapshots, validating full replacements, rollback after a failed multi-collection write, and successful replacement.
+- Run these tests in GitHub Actions before building APKs so data-safety regressions fail the pipeline early.
+- Keep this phase scoped to tests, CI, and roadmap documentation; do not modify shared runtime JS, UI, or the separate web/Electron behavior without an explicitly agreed reason.
+- Do not claim tests pass until the new CI run confirms it.
 
 ## Phase 10 — UI Edits and UX Enhancements
 Improve the Android app's interface and usability without a wholesale redesign or breaking working behavior.
