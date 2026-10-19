@@ -170,12 +170,12 @@ public final class MainActivity extends Activity {
                 "' #appShell { box-sizing: border-box; height: 100dvh; padding-top: var(--tgc-native-inset-top, 0px); padding-bottom: var(--tgc-native-inset-bottom, 0px); }' +" +
                 "' #authGateScreen { box-sizing: border-box; padding-top: var(--tgc-native-inset-top, 0px); padding-bottom: var(--tgc-native-inset-bottom, 0px); }' +" +
                 "' #appHeader { position: relative; background: linear-gradient(110deg, rgba(37,22,52,.99), rgba(12,8,20,.98) 68%); box-shadow: 0 6px 24px rgba(0,0,0,.22); }' +" +
-                "' #appHeader::after { content: \"\"; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: linear-gradient(90deg, transparent, rgba(166,111,255,.9), rgba(80,215,255,.45), transparent); pointer-events: none; }' +"
+                "' #appHeader::after { content: \"\"; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: linear-gradient(90deg, transparent, rgba(166,111,255,.9), rgba(80,215,255,.45), transparent); pointer-events: none; }' +" +
                 "' #appBrandGlyph { filter: drop-shadow(0 0 7px rgba(154,96,255,.72)); animation: tgcAndroidGlyphBreath 3.2s ease-in-out infinite; }' +" +
                 "' #appSidebar { background: linear-gradient(180deg, rgba(25,16,36,.99), rgba(12,8,20,.99)); }' +" +
                 "' .sidebarNavItem { position: relative; overflow: hidden; margin: 2px 0; }' +" +
                 "' .sidebarNavItem.sidebarNavItemActive { background: linear-gradient(100deg, rgba(125,72,190,.34), rgba(60,35,84,.2)); box-shadow: inset 0 0 0 1px rgba(166,111,255,.42), 0 4px 18px rgba(89,52,135,.2); }' +" +
-                "' .sidebarNavItem.sidebarNavItemActive::before { content: \"\"; position: absolute; left: 0; top: 18%; bottom: 18%; width: 3px; border-radius: 0 4px 4px 0; background: linear-gradient(180deg, #b58aff, #50d7ff); box-shadow: 0 0 12px rgba(154,96,255,.7); }' +"
+                "' .sidebarNavItem.sidebarNavItemActive::before { content: \"\"; position: absolute; left: 0; top: 18%; bottom: 18%; width: 3px; border-radius: 0 4px 4px 0; background: linear-gradient(180deg, #b58aff, #50d7ff); box-shadow: 0 0 12px rgba(154,96,255,.7); }' +" +
                 "' #appMain { background-image: radial-gradient(ellipse at 12% 0%, rgba(115,66,166,.12), transparent 48%); }' +" +
                 "' .homeWidget, .entryCard, .ideaCard, .milestoneCard, .timelineCard, .settingsSection { border-color: rgba(154,96,255,.22); box-shadow: 0 8px 28px rgba(0,0,0,.14); transition: border-color 220ms ease, box-shadow 220ms ease, transform 180ms ease; }' +" +
                 "' .homeWidget:active, .entryCard:active, .ideaCard:active, .milestoneCard:active, .timelineCard:active { border-color: rgba(166,111,255,.55); }' +" +
