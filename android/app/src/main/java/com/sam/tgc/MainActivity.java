@@ -23,7 +23,7 @@ import androidx.credentials.CustomCredential;
 import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
-import androidx.credentials.GetGoogleIdOption;
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import androidx.webkit.WebViewAssetLoader;
 
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
