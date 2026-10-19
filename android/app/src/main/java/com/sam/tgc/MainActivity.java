@@ -43,6 +43,8 @@ public final class MainActivity extends Activity {
     private static final String APP_ORIGIN = "https://appassets.androidplatform.net";
     private static final int REQUEST_SPEECH_INPUT = 8107;
     private WebView webView;
+    private int nativeTopInsetDp;
+    private int nativeBottomInsetDp;
     private WebViewAssetLoader assetLoader;
     private CredentialManager credentialManager;
     private final Executor callbackExecutor = Executors.newSingleThreadExecutor();
@@ -63,9 +65,14 @@ public final class MainActivity extends Activity {
             Insets bars = windowInsets.getInsets(
                 WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()
             );
-            Insets ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
-            // Apply insets once at the native WebView boundary. Include the keyboard when taller than the navigation bar.
-            view.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, ime.bottom));
+            boolean imeVisible = windowInsets.isVisible(WindowInsetsCompat.Type.ime());
+            float density = getResources().getDisplayMetrics().density;
+            nativeTopInsetDp = Math.round(bars.top / density);
+            // adjustResize already shrinks the WebView for the keyboard. Do not add the IME inset again.
+            nativeBottomInsetDp = imeVisible ? 0 : Math.round(bars.bottom / density);
+            // Keep the WebView edge-to-edge; the app shell receives CSS safe-area values instead.
+            view.setPadding(0, 0, 0, 0);
+            applyNativeInsetsToWebView();
             return WindowInsetsCompat.CONSUMED;
         });
         ViewCompat.requestApplyInsets(webView);
@@ -104,6 +111,7 @@ public final class MainActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 if (url != null && url.startsWith(APP_ORIGIN + "/")) {
+                    applyNativeInsetsToWebView();
                     installAndroidExperienceUi();
                     installVoiceInputUi();
                 }
@@ -120,6 +128,18 @@ public final class MainActivity extends Activity {
         if (!restoredWebViewState) {
             webView.loadUrl(APP_ORIGIN + "/assets/www/index.html");
         }
+    }
+
+
+    private void applyNativeInsetsToWebView() {
+        if (webView == null || isFinishing()) return;
+        String script = "(function() {" +
+            "var root = document.documentElement;" +
+            "if (!root) return;" +
+            "root.style.setProperty('--tgc-native-inset-top', '${nativeTopInsetDp}px');" +
+            "root.style.setProperty('--tgc-native-inset-bottom', '${nativeBottomInsetDp}px');" +
+        "})();";
+        webView.evaluateJavascript(script, null);
     }
 
     /**
@@ -146,8 +166,35 @@ public final class MainActivity extends Activity {
                 "' @keyframes tgcAndroidGlyphBreath { 0%,100% { opacity: .82; text-shadow: 0 0 0 rgba(139,92,246,0); } 50% { opacity: 1; text-shadow: 0 0 12px rgba(139,92,246,.42); } }' +" +
                 "' .authGateCard { animation: tgcAndroidEnter 360ms cubic-bezier(.2,.75,.25,1) both; }' +" +
                 "' @keyframes tgcAndroidEnter { from { opacity: 0; transform: translateY(8px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }' +" +
-                "' @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } }';" +
+                "' @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } }' +" +
+                "' #appShell { box-sizing: border-box; height: 100dvh; padding-top: var(--tgc-native-inset-top, 0px); padding-bottom: var(--tgc-native-inset-bottom, 0px); }' +" +
+                "' #authGateScreen { box-sizing: border-box; padding-top: var(--tgc-native-inset-top, 0px); padding-bottom: var(--tgc-native-inset-bottom, 0px); }' +" +
+                "' #appHeader { position: relative; background: linear-gradient(110deg, rgba(37,22,52,.99), rgba(12,8,20,.98) 68%); box-shadow: 0 6px 24px rgba(0,0,0,.22); }' +" +
+                "' #appHeader::after { content: \\"\\"; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: linear-gradient(90deg, transparent, rgba(166,111,255,.9), rgba(80,215,255,.45), transparent); pointer-events: none; }' +" +
+                "' #appBrandGlyph { filter: drop-shadow(0 0 7px rgba(154,96,255,.72)); animation: tgcAndroidGlyphBreath 3.2s ease-in-out infinite; }' +" +
+                "' #appSidebar { background: linear-gradient(180deg, rgba(25,16,36,.99), rgba(12,8,20,.99)); }' +" +
+                "' .sidebarNavItem { position: relative; overflow: hidden; margin: 2px 0; }' +" +
+                "' .sidebarNavItem.sidebarNavItemActive { background: linear-gradient(100deg, rgba(125,72,190,.34), rgba(60,35,84,.2)); box-shadow: inset 0 0 0 1px rgba(166,111,255,.42), 0 4px 18px rgba(89,52,135,.2); }' +" +
+                "' .sidebarNavItem.sidebarNavItemActive::before { content: \\"\\"; position: absolute; left: 0; top: 18%; bottom: 18%; width: 3px; border-radius: 0 4px 4px 0; background: linear-gradient(180deg, #b58aff, #50d7ff); box-shadow: 0 0 12px rgba(154,96,255,.7); }' +" +
+                "' #appMain { background-image: radial-gradient(ellipse at 12% 0%, rgba(115,66,166,.12), transparent 48%); }' +" +
+                "' .homeWidget, .entryCard, .ideaCard, .milestoneCard, .timelineCard, .settingsSection { border-color: rgba(154,96,255,.22); box-shadow: 0 8px 28px rgba(0,0,0,.14); transition: border-color 220ms ease, box-shadow 220ms ease, transform 180ms ease; }' +" +
+                "' .homeWidget:active, .entryCard:active, .ideaCard:active, .milestoneCard:active, .timelineCard:active { border-color: rgba(166,111,255,.55); }' +" +
+                "' button:active, .sidebarNavItem:active, .dockItem:active { transform: scale(.965); filter: brightness(1.2); box-shadow: 0 0 0 1px rgba(166,111,255,.35), 0 0 18px rgba(115,66,166,.2); }' +" +
+                "' @media (hover: none) and (pointer: coarse) { #appHeader { padding-top: 0; } #appSidebar, #appMain { overscroll-behavior-y: contain; } }';" +
             "document.head.appendChild(style);" +
+            // Sync AI-style edge swipe: a deliberate rightward swipe from the left edge returns to the sidebar menu.
+            "var shell = document.getElementById('appShell'), edgeTouch = null;" +
+            "document.addEventListener('touchstart', function(e) {" +
+                "if (!shell || !window.matchMedia('(hover: none) and (pointer: coarse)').matches || !e.touches || e.touches.length !== 1) { edgeTouch = null; return; }" +
+                "var t = e.touches[0], target = e.target;" +
+                "if (t.clientX > 32 || (target && target.closest && target.closest('input, textarea, select, button, a, .richEditorSurface'))) { edgeTouch = null; return; }" +
+                "edgeTouch = {x: t.clientX, y: t.clientY};" +
+            "}, {passive:true});" +
+            "document.addEventListener('touchend', function(e) {" +
+                "if (!edgeTouch || !e.changedTouches || !e.changedTouches.length) return;" +
+                "var t = e.changedTouches[0], dx = t.clientX - edgeTouch.x, dy = Math.abs(t.clientY - edgeTouch.y); edgeTouch = null;" +
+                "if (dx >= 72 && dx > dy * 1.35 && shell && shell.classList.contains('mobileRouteOpen')) shell.classList.remove('mobileRouteOpen');" +
+            "}, {passive:true});" +
         "})();";
         webView.evaluateJavascript(script, null);
     }
