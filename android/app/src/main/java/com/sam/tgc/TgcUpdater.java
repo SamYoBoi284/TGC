@@ -126,7 +126,7 @@ public final class TgcUpdater {
                 if (!directory.exists() && !directory.mkdirs()) {
                     throw new IllegalStateException("Could not create the update cache directory.");
                 }
-                partial = new File(directory, "sync-ai-release.apk.part");
+                partial = new File(directory, "tgc-android-release.apk.part");
                 File apk = new File(directory, APK_ASSET);
                 apkConnection = open(release.apkUrl);
                 int response = apkConnection.getResponseCode();
