@@ -29,6 +29,7 @@ import { initOnThisDay } from "./onthisday.js";
 import { initArchive } from "./archive.js";
 import { initSettings } from "./settings.js";
 import { initMigrationUI } from "./migration.js";
+import { initBackupRestoreSafety } from "./backup-restore.js";
 import { initAmbientEffects } from "./ambient-effects.js";
 
 let booted = false;
@@ -70,6 +71,7 @@ export function bootApp() {
     initArchive();
     initSettings();
     initMigrationUI();
+    initBackupRestoreSafety();
     initAmbientEffects();
 }
 
@@ -85,9 +87,9 @@ export function bootApp() {
 // independent, per the "don't interfere with Electron" requirement.
 //
 // This runs regardless of auth state (it just caches static files
-// for instant/offline loads — the login screen itself is part of
-// the shell it caches) so it's exported separately from bootApp()
-// and called unconditionally by authgate.js.
+// for instant loads — the login screen itself is part of the shell
+// it caches) so it's exported separately from bootApp() and called
+// unconditionally by authgate.js.
 export function registerServiceWorker() {
     if ("serviceWorker" in navigator && !window.chronicle) {
         window.addEventListener("load", () => {
