@@ -80,6 +80,7 @@ jobs:
         env:
           VERSION_NAME: ${{ steps.version.outputs.version_name }}
           VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          TGC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.TGC_GOOGLE_WEB_CLIENT_ID }}
         shell: bash
         run: gradle --no-daemon -p android assembleRelease
 
