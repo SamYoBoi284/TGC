@@ -158,22 +158,14 @@ public final class MainActivity extends Activity {
                     "if (input) input.insertAdjacentElement('afterend', b);" +
                 "}" +
             "}" +
-            "window.__tgcVoiceResult = function(text, error) {" +
-                "var target = activeTarget;" +
-                "if (error) {" +
-                    "var status = target && target.id === 'dumpCaptureInput' ? document.getElementById('dumpSaveStatus') : document.getElementById('entriesSaveStatus');" +
-                    "if (status) status.textContent = error;" +
-                    "return;" +
-                "}" +
-                "if (!target || !text) return;" +
+            "function insertReviewed(text) {" +
+                "var target = activeTarget; if (!target || !text) return;" +
                 "if (target.isContentEditable) {" +
                     "target.focus(); var range = savedRange;" +
-                    "if (!range || !target.contains(range.commonAncestorContainer)) {" +
-                        "range = document.createRange(); range.selectNodeContents(target); range.collapse(false);" +
-                    "}" +
+                    "if (!range || !target.contains(range.commonAncestorContainer)) { range = document.createRange(); range.selectNodeContents(target); range.collapse(false); }" +
                     "var prefix = range.startContainer && range.startContainer.textContent ? range.startContainer.textContent.slice(0, range.startOffset) : '';" +
                     "var suffix = range.startContainer && range.startContainer.textContent ? range.startContainer.textContent.slice(range.startOffset) : '';" +
-                    "var insert = (prefix && !/\\s$/.test(prefix) ? ' ' : '') + text + (suffix && !/^\\s/.test(suffix) ? ' ' : '');" +
+                    "var insert = (prefix && !/\\\\s$/.test(prefix) ? ' ' : '') + text + (suffix && !/^\\\\s/.test(suffix) ? ' ' : '');" +
                     "range.deleteContents(); var node = document.createTextNode(insert); range.insertNode(node);" +
                     "range.setStartAfter(node); range.collapse(true); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);" +
                     "target.dispatchEvent(new Event('input', {bubbles:true}));" +
@@ -181,9 +173,35 @@ public final class MainActivity extends Activity {
                     "var start = target.selectionStart == null ? target.value.length : target.selectionStart;" +
                     "var end = target.selectionEnd == null ? start : target.selectionEnd;" +
                     "var before = target.value.slice(0,start), after = target.value.slice(end);" +
-                    "var insert = (before && !/\\s$/.test(before) ? ' ' : '') + text + (after && !/^\\s/.test(after) ? ' ' : '');" +
+                    "var insert = (before && !/\\\\s$/.test(before) ? ' ' : '') + text + (after && !/^\\\\s/.test(after) ? ' ' : '');" +
                     "target.setRangeText(insert, start, end, 'end'); target.dispatchEvent(new Event('input', {bubbles:true})); target.focus();" +
                 "}" +
+            "}" +
+            "function showReview(transcript) {" +
+                "document.getElementById('tgcVoiceReview')?.remove();" +
+                "var overlay = document.createElement('div'); overlay.id = 'tgcVoiceReview';" +
+                "overlay.setAttribute('role','dialog'); overlay.setAttribute('aria-modal','true'); overlay.setAttribute('aria-labelledby','tgcVoiceReviewTitle');" +
+                "overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(5,3,10,.82);backdrop-filter:blur(8px);';" +
+                "var card = document.createElement('section');" +
+                "card.style.cssText = 'width:min(520px,100%);max-height:90%;overflow:auto;padding:20px;border:1px solid var(--color-border-subtle,#51445f);border-radius:16px;background:var(--color-bg-elevated,#17111f);color:var(--color-text-soft-white,#f4effa);box-shadow:0 18px 60px rgba(0,0,0,.45);';" +
+                "var heading = document.createElement('h2'); heading.id='tgcVoiceReviewTitle'; heading.textContent='Review voice transcript'; heading.style.cssText='margin:0 0 8px;font-size:18px;';" +
+                "var hint = document.createElement('p'); hint.textContent='Edit anything that needs correcting. Nothing is added to your chronicle until you choose Insert transcript.'; hint.style.cssText='margin:0 0 12px;line-height:1.5;opacity:.8;font-size:13px;';" +
+                "var field = document.createElement('textarea'); field.setAttribute('aria-label','Recognized transcript'); field.value=transcript;" +
+                "field.style.cssText='box-sizing:border-box;width:100%;min-height:130px;resize:vertical;padding:12px;border:1px solid var(--color-border-subtle,#51445f);border-radius:10px;background:rgba(0,0,0,.2);color:inherit;font:inherit;line-height:1.5;';" +
+                "var actions = document.createElement('div'); actions.style.cssText='display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px;';" +
+                "var cancel = document.createElement('button'); cancel.type='button'; cancel.textContent='Cancel';" +
+                "cancel.style.cssText='padding:9px 14px;border:1px solid var(--color-border-subtle,#51445f);border-radius:8px;background:transparent;color:inherit;cursor:pointer;';" +
+                "var insert = document.createElement('button'); insert.type='button'; insert.textContent='Insert transcript';" +
+                "insert.style.cssText='padding:9px 14px;border:1px solid #8b5ac7;border-radius:8px;background:rgba(104,67,145,.4);color:inherit;cursor:pointer;font-weight:600;';" +
+                "cancel.addEventListener('click',function(){overlay.remove();});" +
+                "insert.addEventListener('click',function(){var value=field.value.trim(); if(!value){field.focus();return;} overlay.remove(); insertReviewed(value);});" +
+                "actions.append(cancel,insert); card.append(heading,hint,field,actions); overlay.appendChild(card); document.body.appendChild(overlay);" +
+                "field.focus(); field.setSelectionRange(field.value.length,field.value.length);" +
+            "}" +
+            "window.__tgcVoiceResult = function(text, error) {" +
+                "var target = activeTarget;" +
+                "if (error) { var status = target && target.id === 'dumpCaptureInput' ? document.getElementById('dumpSaveStatus') : document.getElementById('entriesSaveStatus'); if (status) status.textContent = error; return; }" +
+                "if (!target || !text) return; showReview(text);" +
             "};" +
             "attach(); new MutationObserver(attach).observe(document.documentElement, {childList:true,subtree:true});" +
         "})();";
