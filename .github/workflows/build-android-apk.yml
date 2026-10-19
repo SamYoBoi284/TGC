@@ -11,6 +11,7 @@ on:
       - "feat/phase8-apk-build-pipeline"
       - "feat/phase9-data-safety-tests"
       - "feat/phase10-android-visual-polish"
+      - "feat/tgc-release-updater-2026-10-19"
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
