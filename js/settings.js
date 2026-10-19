@@ -1,4 +1,4 @@
-import { COLLECTION_NAMES, readCollectionsSnapshot, replaceCollections } from "./store.js";
+import { COLLECTION_NAMES, readCollectionsSnapshot, replaceCollections, getStorageProfile, clearRecoveryCopies, deleteArchivedRecords } from "./store.js";
 
 // ===========================================
 // The Glitchcore Chronicle
@@ -225,9 +225,21 @@ function render() {
                 <p id="settingsDataStatus" class="settingsStatusText"></p>
             </section>
 
+            <section class="settingsSection" id="settingsStorageSection">
+                <h2 class="settingsSectionTitle">Local storage</h2>
+                <p class="settingsRowHint">Manage TGC's local browser storage. Sizes are estimates, not your phone's full app-storage total.</p>
+                <div id="settingsStorageSummary" class="settingsStorageSummary">Calculating…</div>
+                <div id="settingsStorageBreakdown" class="settingsStorageBreakdown"></div>
+                <div class="settingsRow"><div class="settingsRowLabel"><span class="settingsRowTitle">Remove recovery copies</span><span class="settingsRowHint">Frees space used by safety copies. Current records remain, but older recovery copies will no longer be available.</span></div><div class="settingsRowControl"><button type="button" class="settingsBtn settingsBtnGhost" id="settingsStorageClearRecoveryBtn">Clear copies</button></div></div>
+                <div class="settingsRow"><div class="settingsRowLabel"><span class="settingsRowTitle">Delete archived records</span><span class="settingsRowHint">Permanently removes archived records from this profile. Export a backup first.</span></div><div class="settingsRowControl"><button type="button" class="settingsBtn settingsBtnGhost" id="settingsStorageDeleteArchivedBtn">Delete archived</button></div></div>
+                <div class="settingsRow"><div class="settingsRowLabel"><span class="settingsRowTitle">Custom background image</span><span class="settingsRowHint">Large images are stored inside app settings. Removing it frees local space.</span></div><div class="settingsRowControl"><button type="button" class="settingsBtn settingsBtnGhost" id="settingsStorageClearBackgroundBtn">Remove image</button></div></div>
+                <div class="settingsRow"><div class="settingsRowLabel"><span class="settingsRowTitle">Refresh storage estimate</span><span class="settingsRowHint">Recalculate the local storage breakdown.</span></div><div class="settingsRowControl"><button type="button" class="settingsBtn" id="settingsStorageRefreshBtn">Refresh</button></div></div>
+                <p id="settingsStorageStatus" class="settingsStatusText" aria-live="polite"></p>
+            </section>
+
             <section class="settingsSection" id="settingsSyncSection">
                 <h2 class="settingsSectionTitle">Sync</h2>
-                <p class="settingsRowHint">Offline-first stays the default for your data. Cloud backup itself is still opt-in — signing in is required just to open the app, but nothing is sent to Firestore unless you turn Cloud backup on below.</p>
+                <p class="settingsRowHint">Your chronicle is local-first. Cloud backup is opt-in. Guest mode uses a separate local profile and never sends guest data to Firestore.</p>
 
                 <div class="settingsRow">
                     <div class="settingsRowLabel">
@@ -237,6 +249,7 @@ function render() {
                     <div class="settingsRowControl">
                         <button type="button" class="settingsBtn" id="settingsSignInBtn">Sign in with Google</button>
                         <button type="button" class="settingsBtn settingsBtnGhost" id="settingsSignOutBtn" hidden>Log out</button>
+                        <button type="button" class="settingsBtn settingsBtnGhost" id="settingsGuestModeBtn" hidden>Switch to guest mode</button>
                     </div>
                 </div>
 
@@ -313,7 +326,13 @@ function reflectCurrentValues() {
     if (reducedMotionInput) reducedMotionInput.checked = !!current.reducedMotion;
 
     const syncEnabledInput = document.getElementById("settingsSyncEnabledInput");
-    if (syncEnabledInput) syncEnabledInput.checked = !!current.sync.enabled;
+    const guestMode = getStorageProfile() === "guest";
+    if (syncEnabledInput) { syncEnabledInput.checked = !!current.sync.enabled; syncEnabledInput.disabled = guestMode; }
+    for (const id of ["settingsSyncTestBtn", "settingsSyncBackupBtn", "settingsSyncListSnapshotsBtn"]) {
+        const control = document.getElementById(id); if (control) control.disabled = guestMode;
+    }
+    const syncHint = document.querySelector("#settingsSyncSection > .settingsRowHint");
+    if (syncHint && guestMode) syncHint.textContent = "Guest mode is isolated and local-only. Switch to a Google account to use cloud backup or restore.";
 
     // Only meaningful (and only present) in Electron — a plain browser
     // tab has no tray to minimize to.
@@ -325,6 +344,8 @@ function reflectCurrentValues() {
     }
 
     renderBgPreview();
+    reflectAuthState();
+    renderStorageReport();
 }
 
 function renderBgPreview() {
@@ -381,12 +402,8 @@ function bindEvents() {
         bgInput.value = "";
     });
 
-    bgClearBtn?.addEventListener("click", () => {
-        current.backgroundImage = null;
-        save();
-        applyBackgroundImage(null);
-        renderBgPreview();
-    });
+    // Wallpaper removal is bound once below for both Appearance and Storage.
+    void bgClearBtn;
 
     scaleInput?.addEventListener("input", () => {
         const value = Number(scaleInput.value);
@@ -407,6 +424,20 @@ function bindEvents() {
     exportBtn?.addEventListener("click", handleExport);
     importBtn?.addEventListener("click", () => importInput?.click());
     importInput?.addEventListener("change", handleImportFileChosen);
+
+    document.getElementById("settingsStorageRefreshBtn")?.addEventListener("click", renderStorageReport);
+    document.getElementById("settingsStorageClearRecoveryBtn")?.addEventListener("click", () => {
+        if (!window.confirm("Remove all recovery copies for this profile? Current records remain, but older safety copies cannot be restored afterward.")) return;
+        try { const removed = clearRecoveryCopies(); setStorageStatus(removed ? "Removed " + removed + " recovery cop" + (removed === 1 ? "y." : "ies.") : "No recovery copies to remove."); renderStorageReport(); }
+        catch (err) { setStorageStatus("Could not clear recovery copies: " + (err?.message || "storage error")); }
+    });
+    document.getElementById("settingsStorageDeleteArchivedBtn")?.addEventListener("click", () => {
+        if (!window.confirm("Permanently delete all archived records in this profile? Export a JSON backup first if you may want them later. This cannot be undone.")) return;
+        try { const counts = deleteArchivedRecords(); const total = Object.values(counts).reduce((sum, count) => sum + count, 0); setStorageStatus(total ? "Permanently deleted " + total + " archived record" + (total === 1 ? "." : "s.") : "No archived records found."); renderStorageReport(); }
+        catch (err) { setStorageStatus("Archived cleanup failed: " + (err?.message || "local data could not be read")); }
+    });
+    document.getElementById("settingsStorageClearBackgroundBtn")?.addEventListener("click", clearBackgroundImage);
+    document.getElementById("settingsBgClearBtn")?.addEventListener("click", clearBackgroundImage);
 
     const syncEnabledInput = document.getElementById("settingsSyncEnabledInput");
     const syncTestBtn = document.getElementById("settingsSyncTestBtn");
@@ -441,10 +472,18 @@ function bindEvents() {
     const signOutBtn = document.getElementById("settingsSignOutBtn");
 
     signInBtn?.addEventListener("click", async () => {
+        const wasGuest = getStorageProfile() === "guest";
+        if (wasGuest) localStorage.setItem("chronicle.accessMode", "account");
         setSyncStatus("Opening Google sign-in…");
         const { signInWithGoogle } = await import("./firebase.js");
         const result = await signInWithGoogle(current.sync.firebaseConfig || undefined);
-        setSyncStatus(result.ok ? `Signed in as ${result.user.email}.` : `Sign-in failed: ${result.error}`);
+        if (result.ok) {
+            if (wasGuest && !result.redirecting) window.location.reload();
+            setSyncStatus(result.redirecting ? "Redirecting to Google…" : "Switching to your account profile…");
+        } else {
+            if (wasGuest) localStorage.setItem("chronicle.accessMode", "guest");
+            setSyncStatus(`Sign-in failed: ${result.error}`);
+        }
         reflectAuthState();
     });
 
@@ -453,6 +492,17 @@ function bindEvents() {
         await signOutUser();
         setSyncStatus("Signed out.");
         reflectAuthState();
+    });
+
+    document.getElementById("settingsGuestModeBtn")?.addEventListener("click", async () => {
+        if (!window.confirm("Switch to guest mode? Your account chronicle will remain untouched. Guest mode uses a separate local profile and cloud backup will be unavailable until you switch back.")) return;
+        localStorage.setItem("chronicle.accessMode", "guest");
+        const { getCurrentUser, signOutUser } = await import("./firebase.js");
+        if (getCurrentUser()) {
+            const result = await signOutUser();
+            if (!result.ok) { localStorage.setItem("chronicle.accessMode", "account"); setSyncStatus("Could not switch to guest mode: " + (result.error || "sign-out failed")); return; }
+        }
+        window.location.reload();
     });
 
     reflectAuthState();
@@ -554,29 +604,64 @@ function setSyncStatus(text) {
 }
 
 async function reflectAuthState() {
-    const hint = document.getElementById("settingsAuthHint");
-    const signInBtn = document.getElementById("settingsSignInBtn");
-    const signOutBtn = document.getElementById("settingsSignOutBtn");
+    const hint = document.getElementById("settingsAuthHint"), signInBtn = document.getElementById("settingsSignInBtn"), signOutBtn = document.getElementById("settingsSignOutBtn"), guestModeBtn = document.getElementById("settingsGuestModeBtn");
     if (!hint || !signInBtn || !signOutBtn) return;
-
+    if (getStorageProfile() === "guest") {
+        hint.textContent = "Guest mode — local-only data, separate from your Google account.";
+        signInBtn.textContent = "Switch to Google account"; signInBtn.hidden = false; signOutBtn.hidden = true;
+        if (guestModeBtn) guestModeBtn.hidden = true;
+        return;
+    }
     try {
-        const { getCurrentUser } = await import("./firebase.js");
-        const user = getCurrentUser();
+        const { getCurrentUser } = await import("./firebase.js"); const user = getCurrentUser();
         if (user) {
-            hint.textContent = `Signed in as ${user.email}.`;
-            signInBtn.hidden = true;
-            signOutBtn.hidden = false;
+            hint.textContent = `Signed in as ${user.email}.`; signInBtn.hidden = true; signOutBtn.hidden = false;
+            if (guestModeBtn) guestModeBtn.hidden = false;
         } else {
-            hint.textContent = "Not signed in.";
-            signInBtn.hidden = false;
-            signOutBtn.hidden = true;
+            hint.textContent = "Not signed in."; signInBtn.textContent = "Sign in with Google"; signInBtn.hidden = false; signOutBtn.hidden = true;
+            if (guestModeBtn) guestModeBtn.hidden = true;
         }
     } catch { /* firebase.js not loaded yet — stays at default copy */ }
 }
 
 function setDataStatus(text) {
-    const el = document.getElementById("settingsDataStatus");
-    if (el) el.textContent = text;
+    const el = document.getElementById("settingsDataStatus"); if (el) el.textContent = text;
+}
+function setStorageStatus(text) { const el = document.getElementById("settingsStorageStatus"); if (el) el.textContent = text; }
+function formatBytes(bytes) {
+    if (!Number.isFinite(bytes) || bytes <= 0) return "0 B"; if (bytes < 1024) return bytes + " B";
+    const units = ["KB", "MB", "GB"]; let size = bytes / 1024, index = 0;
+    while (size >= 1024 && index < units.length - 1) { size /= 1024; index += 1; }
+    return size.toFixed(size >= 10 ? 1 : 2) + " " + units[index];
+}
+function renderStorageReport() {
+    const summary = document.getElementById("settingsStorageSummary"), breakdown = document.getElementById("settingsStorageBreakdown"); if (!summary || !breakdown) return;
+    try {
+        const profile = getStorageProfile(), bytes = value => new TextEncoder().encode(value || "").length, included = [];
+        for (let i = 0; i < localStorage.length; i += 1) {
+            const name = localStorage.key(i); if (!name) continue;
+            const relevant = profile === "guest" ? name.startsWith("chronicle.guest.") || name === STORAGE_KEY : name.startsWith("chronicle.") && !name.startsWith("chronicle.guest.");
+            if (relevant) included.push({ name, value: localStorage.getItem(name) || "" });
+        }
+        const totals = { collections: 0, recovery: 0, background: 0, sync: 0, other: 0 };
+        for (const item of included) {
+            const size = bytes(item.name) + bytes(item.value);
+            if (COLLECTION_NAMES.some(name => item.name === (profile === "guest" ? "chronicle.guest." + name : "chronicle." + name))) totals.collections += size;
+            else if (item.name.includes(".recovery.")) totals.recovery += size;
+            else if (item.name === STORAGE_KEY) { const imageBytes = bytes(current.backgroundImage || ""); totals.background += Math.min(size, imageBytes); totals.other += Math.max(0, size - imageBytes); }
+            else if (item.name === "chronicle.syncQueue") totals.sync += size; else totals.other += size;
+        }
+        const total = Object.values(totals).reduce((sum, value) => sum + value, 0);
+        summary.textContent = "Estimated TGC local storage · " + (profile === "guest" ? "Guest profile" : "Account profile") + ": " + formatBytes(total);
+        breakdown.innerHTML = [["Chronicle collections",totals.collections],["Recovery copies",totals.recovery],["Custom background image",totals.background],["Sync queue",totals.sync],["Other TGC settings",totals.other]].map(([label,size]) => `<div class="settingsStorageBreakdownRow"><span>${label}</span><strong>${formatBytes(size)}</strong></div>`).join("");
+        const recoveryBtn = document.getElementById("settingsStorageClearRecoveryBtn"); if (recoveryBtn) recoveryBtn.disabled = totals.recovery === 0;
+        const archivedBtn = document.getElementById("settingsStorageDeleteArchivedBtn"); if (archivedBtn) archivedBtn.disabled = totals.collections === 0;
+        const bgBtn = document.getElementById("settingsStorageClearBackgroundBtn"); if (bgBtn) bgBtn.disabled = !current.backgroundImage;
+    } catch (err) { summary.textContent = "Storage usage could not be measured."; breakdown.textContent = err?.message || "Local storage is unavailable."; }
+}
+function clearBackgroundImage() {
+    if (!current.backgroundImage) { renderStorageReport(); return; }
+    current.backgroundImage = null; save(); applyBackgroundImage(null); renderBgPreview(); setStorageStatus("Custom background image removed."); renderStorageReport();
 }
 
 function handleExport() {
