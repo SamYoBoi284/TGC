@@ -182,7 +182,8 @@ public final class MainActivity extends Activity {
                 "' .sidebarNavItem { position: relative; overflow: hidden; margin: 2px 0; }' +" +
                 "' .sidebarNavItem.sidebarNavItemActive { background: linear-gradient(100deg, rgba(125,72,190,.34), rgba(60,35,84,.2)); box-shadow: inset 0 0 0 1px rgba(166,111,255,.42), 0 4px 18px rgba(89,52,135,.2); }' +" +
                 "' .sidebarNavItem.sidebarNavItemActive::before { content: \"\"; position: absolute; left: 0; top: 18%; bottom: 18%; width: 3px; border-radius: 0 4px 4px 0; background: linear-gradient(180deg, #b58aff, #50d7ff); box-shadow: 0 0 12px rgba(154,96,255,.7); }' +" +
-                "' #appMain { background-image: radial-gradient(ellipse at 12% 0%, rgba(115,66,166,.12), transparent 48%); }' +" +
+                "' #appMain { background-image: radial-gradient(ellipse at 12% 0%, rgba(115,66,166,.12), transparent 48%); }' +"
+                "' #appDock { bottom: calc(var(--footer-height) + var(--space-md) + var(--tgc-native-inset-bottom, 0px)); }' +" +
                 "' .homeWidget, .entryCard, .ideaCard, .milestoneCard, .timelineCard, .settingsSection { border-color: rgba(154,96,255,.22); box-shadow: 0 8px 28px rgba(0,0,0,.14); transition: border-color 220ms ease, box-shadow 220ms ease, transform 180ms ease; }' +" +
                 "' .homeWidget:active, .entryCard:active, .ideaCard:active, .milestoneCard:active, .timelineCard:active { border-color: rgba(166,111,255,.55); }' +" +
                 "' button:active, .sidebarNavItem:active, .dockItem:active { transform: scale(.965); filter: brightness(1.2); box-shadow: 0 0 0 1px rgba(166,111,255,.35), 0 0 18px rgba(115,66,166,.2); }' +" +
