@@ -1,9 +1,12 @@
 package com.sam.tgc;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CancellationSignal;
+import android.speech.RecognizerIntent;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -24,18 +27,21 @@ import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
 import androidx.credentials.exceptions.NoCredentialException;
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import androidx.webkit.WebViewAssetLoader;
 
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.Locale;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public final class MainActivity extends Activity {
     private static final String APP_ORIGIN = "https://appassets.androidplatform.net";
+    private static final int REQUEST_SPEECH_INPUT = 8107;
     private WebView webView;
     private WebViewAssetLoader assetLoader;
     private CredentialManager credentialManager;
@@ -80,6 +86,7 @@ public final class MainActivity extends Activity {
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
 
         webView.addJavascriptInterface(new NativeGoogleSignInBridge(), "TGCNativeAuth");
+        webView.addJavascriptInterface(new NativeVoiceBridge(), "TGCNativeVoice");
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -91,6 +98,12 @@ public final class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return !APP_ORIGIN.equals(request.getUrl().getScheme() + "://" + request.getUrl().getHost());
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                if (url != null && url.startsWith(APP_ORIGIN + "/")) installVoiceInputUi();
             }
         });
 
@@ -106,11 +119,130 @@ public final class MainActivity extends Activity {
         }
     }
 
+    private void installVoiceInputUi() {
+        if (webView == null || isFinishing()) return;
+        String script = "(function() {" +
+            "if (window.__tgcVoiceUiInstalled) return;" +
+            "window.__tgcVoiceUiInstalled = true;" +
+            "var activeTarget = null, savedRange = null;" +
+            "function makeButton(label) {" +
+                "var b = document.createElement('button'); b.type = 'button';" +
+                "b.className = 'tgcNativeVoiceButton'; b.textContent = '🎤';" +
+                "b.setAttribute('aria-label', label); b.title = label;" +
+                "b.style.cssText = 'flex:0 0 auto;min-width:32px;height:30px;margin-left:6px;padding:0 9px;border:1px solid var(--color-border-subtle,#51445f);border-radius:8px;background:rgba(104,67,145,.22);color:var(--color-text-soft-white,#f4effa);font-size:15px;cursor:pointer;';" +
+                "b.addEventListener('mousedown', function(e) { e.preventDefault(); });" +
+                "b.addEventListener('click', function() {" +
+                    "var editor = b.closest('.richEditor');" +
+                    "activeTarget = editor ? editor.querySelector('.richEditorSurface') : document.getElementById('dumpCaptureInput');" +
+                    "savedRange = null;" +
+                    "if (activeTarget && activeTarget.isContentEditable) {" +
+                        "var sel = window.getSelection();" +
+                        "if (sel && sel.rangeCount && activeTarget.contains(sel.anchorNode)) savedRange = sel.getRangeAt(0).cloneRange();" +
+                    "}" +
+                    "if (!activeTarget) return;" +
+                    "if (window.TGCNativeVoice && window.TGCNativeVoice.requestSpeechRecognition) {" +
+                        "window.TGCNativeVoice.requestSpeechRecognition();" +
+                    "} else { window.__tgcVoiceResult('', 'Voice input is available in the Android app only.'); }" +
+                "});" +
+                "return b;" +
+            "}" +
+            "function attach() {" +
+                "document.querySelectorAll('.richEditorToolbar').forEach(function(toolbar) {" +
+                    "if (!toolbar.querySelector('.tgcNativeVoiceButton')) toolbar.appendChild(makeButton('Dictate into entry'));" +
+                "});" +
+                "var dump = document.getElementById('dumpCapturePanel');" +
+                "if (dump && !dump.querySelector('.tgcNativeVoiceButton')) {" +
+                    "var b = makeButton('Dictate into brain dump');" +
+                    "b.style.alignSelf = 'flex-end'; b.style.margin = '8px 0 0';" +
+                    "var input = document.getElementById('dumpCaptureInput');" +
+                    "if (input) input.insertAdjacentElement('afterend', b);" +
+                "}" +
+            "}" +
+            "window.__tgcVoiceResult = function(text, error) {" +
+                "var target = activeTarget;" +
+                "if (error) {" +
+                    "var status = document.getElementById('entriesSaveStatus') || document.getElementById('dumpSaveStatus');" +
+                    "if (status) status.textContent = error;" +
+                    "return;" +
+                "}" +
+                "if (!target || !text) return;" +
+                "if (target.isContentEditable) {" +
+                    "target.focus(); var range = savedRange;" +
+                    "if (!range || !target.contains(range.commonAncestorContainer)) {" +
+                        "range = document.createRange(); range.selectNodeContents(target); range.collapse(false);" +
+                    "}" +
+                    "var prefix = range.startContainer && range.startContainer.textContent ? range.startContainer.textContent.slice(0, range.startOffset) : '';" +
+                    "var suffix = range.startContainer && range.startContainer.textContent ? range.startContainer.textContent.slice(range.startOffset) : '';" +
+                    "var insert = (prefix && !/\\s$/.test(prefix) ? ' ' : '') + text + (suffix && !/^\\s/.test(suffix) ? ' ' : '');" +
+                    "range.deleteContents(); var node = document.createTextNode(insert); range.insertNode(node);" +
+                    "range.setStartAfter(node); range.collapse(true); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);" +
+                    "target.dispatchEvent(new Event('input', {bubbles:true}));" +
+                "} else if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {" +
+                    "var start = target.selectionStart == null ? target.value.length : target.selectionStart;" +
+                    "var end = target.selectionEnd == null ? start : target.selectionEnd;" +
+                    "var before = target.value.slice(0,start), after = target.value.slice(end);" +
+                    "var insert = (before && !/\\s$/.test(before) ? ' ' : '') + text + (after && !/^\\s/.test(after) ? ' ' : '');" +
+                    "target.setRangeText(insert, start, end, 'end'); target.dispatchEvent(new Event('input', {bubbles:true})); target.focus();" +
+                "}" +
+            "};" +
+            "attach(); new MutationObserver(attach).observe(document.documentElement, {childList:true,subtree:true});" +
+        "})();";
+        webView.evaluateJavascript(script, null);
+    }
+
     private final class NativeGoogleSignInBridge {
         @JavascriptInterface
         public void signIn() {
             runOnUiThread(() -> beginNativeGoogleSignIn());
         }
+    }
+
+    private final class NativeVoiceBridge {
+        @JavascriptInterface
+        public void requestSpeechRecognition() {
+            runOnUiThread(() -> beginSpeechRecognition());
+        }
+    }
+
+    private void beginSpeechRecognition() {
+        if (isFinishing() || webView == null) return;
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag());
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak your entry. Review the transcript before it is saved.");
+        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
+        try {
+            startActivityForResult(intent, REQUEST_SPEECH_INPUT);
+        } catch (ActivityNotFoundException error) {
+            deliverVoiceResult(null, "Speech recognition isn't available on this device. Install or enable a compatible speech recognition service.");
+        } catch (RuntimeException error) {
+            deliverVoiceResult(null, "Couldn't start voice input. Check microphone access and try again.");
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQUEST_SPEECH_INPUT) return;
+        if (resultCode != RESULT_OK || data == null) return;
+        ArrayList<String> matches = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+        if (matches == null || matches.isEmpty() || matches.get(0) == null || matches.get(0).trim().isEmpty()) {
+            deliverVoiceResult(null, "No speech was recognized. Nothing was added.");
+            return;
+        }
+        deliverVoiceResult(matches.get(0).trim(), null);
+    }
+
+    private void deliverVoiceResult(String text, String error) {
+        runOnUiThread(() -> {
+            if (webView == null || isFinishing()) return;
+            String textJson = text == null ? "null" : JSONObject.quote(text);
+            String errorJson = error == null ? "null" : JSONObject.quote(error);
+            webView.evaluateJavascript(
+                "window.__tgcVoiceResult && window.__tgcVoiceResult(" + textJson + "," + errorJson + ");",
+                null
+            );
+        });
     }
 
     private void beginNativeGoogleSignIn() {
@@ -132,9 +264,6 @@ public final class MainActivity extends Activity {
     }
 
     private void beginExplicitGoogleSignIn() {
-        // Credential Manager can return NoCredentialException for the
-        // account-discovery request on some devices. Retry with Google's
-        // explicit button sign-in option so the user gets a sign-in chooser.
         com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption signInOption =
             new com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption.Builder(
                 BuildConfig.GOOGLE_WEB_CLIENT_ID)
@@ -217,6 +346,7 @@ public final class MainActivity extends Activity {
         if (signInCancellation != null) signInCancellation.cancel();
         if (webView != null) {
             webView.removeJavascriptInterface("TGCNativeAuth");
+            webView.removeJavascriptInterface("TGCNativeVoice");
             webView.destroy();
             webView = null;
         }
