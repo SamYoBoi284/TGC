@@ -23,7 +23,7 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public final class SyncUpdater {
+public final class TgcUpdater {
     private static final String RELEASE_API =
             "https://api.github.com/repos/SamYoBoi284/TGC/releases/latest";
     private static final String APK_ASSET = "tgc-android-release.apk";
@@ -31,7 +31,7 @@ public final class SyncUpdater {
     private static final ExecutorService IO = Executors.newSingleThreadExecutor();
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
 
-    private SyncUpdater() {}
+    private TgcUpdater() {}
 
     public static final class ReleaseInfo {
         public final String version;
